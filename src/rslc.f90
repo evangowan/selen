@@ -131,7 +131,7 @@
 	'RSL <<site>>    ', i, '/', nrslc, "  lon-lat:", lons(i), lats(i)
 		do k=0, nn
 		     rsl = -(slc(i,nn)-slc(i,nn-k))
-		     Write(11,'(f10.4,1x,f10.4)') float(k), rsl
+		     Write(11,'(f10.4,1x,f10.4)') float(k)*DELTA, rsl
 		enddo
 	enddo
 	Close(11) 
