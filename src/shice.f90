@@ -46,7 +46,7 @@
        COMPLEX*16, ALLOCATABLE :: TTTT(:,:), IIII(:,:)   
        INTEGER, PARAMETER :: NH1=20, NH3=20, NH5=24 
        INTEGER, PARAMETER :: NHA=4,  NHI=18, NHD=20 
-       INTEGER, PARAMETER :: NHU=26, NHC=20       
+       INTEGER, PARAMETER :: NHU=26, NHC=20, NHE=7       
        INTEGER I, J, K, L, N, KK, IJ, JJ, NH, I1, I2, ISLOT, IDEG, IEL, ICR(0:NN) 
        REAL*8 AJ
        REAL*8, ALLOCATABLE :: H(:,:), CR(:)      
@@ -59,7 +59,8 @@
        CHARACTER*20 broken_ice_file(51)
        COMPLEX*16, ALLOCATABLE :: ARRAY(:,:)
 
-
+! added by Evan
+       REAL*8 :: longitude, latitude, latitude_spacing
 !
 !
 !#-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
@@ -94,6 +95,7 @@
 	    	  if(ice_model(1:4)=='disk')nh=nhd
 		  if(ice_model(1:4)=='anu0')nh=nhu
 	    	  if(ice_model(1:4)=='icap')nh=nhc
+	    	  if(ice_model(1:8)=='icesheet')nh=nhe
 !		  
             	do j=1, nh 
 	        	read(10,'(a20)') cj
@@ -148,8 +150,15 @@
 	    ELSEIF(ICE_MODEL(1:4)=='ij05') THEN 
        		   Read (10,*)  ij, aj, aj, aj, aj,   (cr(k),k=nn,9,-1) 
         	   Read (10,*) 	                      (cr(k),k= 8,0,-1)   		    	                            ! 2nd row
+
+!#---- "ICESHEET" ----
+	    ELSEIF    (ICE_MODEL(1:8)=='icesheet') THEN 
+        	   Read (10,*) longitude, latitude,                (icr(k),k=nn,0,-1) 
+		   cr(:)=icr(:)	
 !
 !#---- "End of available ice models..." 
+
+
             ENDIF
 !
 !

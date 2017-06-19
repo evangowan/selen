@@ -220,6 +220,11 @@ IMPLICIT NONE
       REAL*8,  PARAMETER :: RHO_ICE  = 931.00
 !
 !
+! variables added by Evan
+	CHARACTER (len=256) :: dummy1, dummy2
+	REAL*8 :: maximum_time, time_interval
+	integer :: dummy_counter, ninc_integer
+
 ! Set default parameters
 !
       RSL_FILE = "'none'"
@@ -660,6 +665,29 @@ ELSEIF (ice_file=='ij05mod.dat') then
 ELSEIF (ice_file(1:5)=='anu05') then 
 !
        ice_flag=1 ; ninc='30' ; header_lines=26 ; IMUL=1 ;  titlice='ANU05'
+
+ELSEIF (ice_file(1:8)=='icesheet') then  ! output from ICESHEET
+!
+       ice_flag=1 ; ninc='30' ; header_lines=7 ; IMUL=1 ;  titlice='ICESHEET'
+
+	 xfile='../ICE-MODELS/'//trim(adjustl(ice_file))
+	 open(18,file=xfile,status='old')
+
+	! calculate ninc from the header rather than guessing
+
+	do dummy_counter = 1, 4, 1
+		read(18,*) dummy1, dummy2
+	end do
+
+	read(18,*) maximum_time, dummy1
+	read(18,*) time_interval, dummy1
+	ninc_integer =  nint(maximum_time / time_interval) - 1
+	read(ninc,'(I3)') ninc_integer
+
+	close(unit=18)
+
+	 
+	
 !
 ENDIF
 !
@@ -3936,6 +3964,7 @@ END
         if(titlice=='ICE5G26')  R_OPTION="-R-2/28/0/220" 
         if(titlice=='IJ05MOD')  R_OPTION="-R-2/23/0/220" 
         if(titlice=='ANU05')    R_OPTION="-R-2/32/0/220" 
+        if(titlice=='ICESHEET')    R_OPTION="-R-2/32/0/220" 
         if(titlice=='ICAP')     R_OPTION="-R-2/23/0/220"
         if(titlice=='ALPS')     R_OPTION="-R-2/23/0/2" 
         if(titlice=='ALASKA')   R_OPTION="-R-0.1/2/0/0.05" 
@@ -3949,6 +3978,7 @@ END
 	if(titlice=='ICE5G')    y_label='ICE5G ESL (m)'
 	if(titlice=='ICE5G26')  y_label='ICE5G ESL (m)'
         if(titlice=='ANU05')    y_label='ANU ESL (m)'
+        if(titlice=='ICESHEET')    y_label='ICESHEET ESL (m)'
 	if(titlice=='ALPS')     y_label='ALPS ESL (m)'
         if(titlice=='ALASKA')   y_label='ALASKA ESL (m)'
         if(titlice=='ICAP')     y_label='ICAP ESL (m)'
@@ -6478,6 +6508,7 @@ Write(19,*) " "
  	IF(titlice=="ICAP")     filename='msgC-'//labchar//'.dat'
  	IF(titlice=="IJ05MOD")  filename='msgI-'//labchar//'.dat'
  	IF(titlice=="ANU05")    filename='msgU-'//labchar//'.dat'
+ 	IF(titlice=="ICESHEET")    filename='msgE-'//labchar//'.dat'
  	IF(titlice=="ICE1")     filename='msg1-'//labchar//'.dat'
  	IF(titlice=="ALPS")     filename='msgA-'//labchar//'.dat'
         IF(titlice=="ALASKA")   filename='msgK-'//labchar//'.dat'

@@ -46,7 +46,7 @@
 !#---- General declarations 
        INTEGER, PARAMETER :: NH1=20, NH3=20, NH5=24 
        INTEGER, PARAMETER :: NHA=4,  NHI=18, NHD=20
-       INTEGER, PARAMETER :: NHU=26, NHC=20
+       INTEGER, PARAMETER :: NHU=26, NHC=20, NHE=7
        REAL*8, PARAMETER :: AMP5 = 1.0, AMP1 = 5.     !AMP5 = 0.70313
        REAL*8, PARAMETER :: RAD=6.371E6   
        REAL*8, PARAMETER :: HMIN=1.0    
@@ -64,6 +64,8 @@
        INTEGER, PARAMETER :: DSTEP=10  
        REAL*8 XXX, OMEGA, COSTETA, SINTETA, TETA, LON, LAT
 
+! added by Evan
+       REAL*8 :: longitude, latitude, latitude_spacing
 !
 !
 !#-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
@@ -98,6 +100,7 @@
    if(ice_model(1:4)=='disk')nh=nhd
    if(ice_model(1:4)=='anu0')nh=nhu
    if(ice_model(1:4)=='icap')nh=nhc
+   if(ice_model(1:8)=='icesheet')nh=nhe
 !		  
    do j=1, nh 
        read(10,'(a20)') cj
@@ -175,6 +178,28 @@
 
     Read (10,115) ij, longc(i), latic(i), alfa(i), (h(i,k),k=0,nn+1) 
     tetac(i)=90.-latic(i) 
+
+!             	    
+ ELSEIF    (ICE_MODEL(1:8)=='icesheet') THEN 
+
+   rewind(unit=10)
+	do j=1, nh
+	   if(j==4) THEN ! this line contains the latitude spacing (also longitude spacing)
+		read(10,*) latitude_spacing
+	   else
+            read(10,'(a20)') cj
+	   endif
+    enddo
+
+  Read (10,*) longitude, latitude, (icr(k),k=nn,0,-1) 
+  cr(:)=icr(:)	
+  tetac(i)=90. - latitude ! colatitude
+	
+   if(longitude < 0. ) THEN
+	longc(i)=360.0 + longitude
+   else
+	longc(i) = longitude
+   end if	
 !
 !#---- "End of available ice models..." 
 !
@@ -222,16 +247,22 @@
 !	    
 !#---- "ICE1" or "ICE5 "----
 !
-           IF    (ICE_MODEL(1:4)=='ice1'.or.ICE_MODEL(1:4)=='ice5') THEN 
+           IF    (ICE_MODEL(1:4)=='ice1'.or.ICE_MODEL(1:4)=='ice5'.or.ICE_MODEL(1:8)=='icesheet') THEN 
 !
 	   if(ice_model(1:4)=='ice1') then 
 	   			      fileout='msg1-'//cj//'.dat'
 				      amp=amp1 
 	   endif
+
 	   if(ice_model(1:4)=='ice5') then 
 	   			      fileout='msg5-'//cj//'.dat'
 				      amp=amp5 
-	   endif	   	   				    
+	   endif	 
+
+	   if(ice_model(1:8)=='icesheet') then ! assume this is where it should be, spherical rectangles
+	   			      fileout='msgE-'//cj//'.dat'
+				      amp=latitude_spacing
+	   endif  	   				    
 !
 	   open(7,file=fileout,status='unknown') 
        	   do 30 i=1, nel

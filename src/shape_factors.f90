@@ -81,6 +81,11 @@
 !
 !#---- Declarations for "ANU05"
        INTEGER, PARAMETER :: NHU=26 
+
+!#---- Declarations for "ICESHEET"
+       INTEGER, PARAMETER :: NHE=7 
+	 REAL*8 :: longitude, latitude, latitude_spacing
+	
 !
 !#---- Declarations for "ICE1"
        INTEGER, PARAMETER :: NH1=20
@@ -141,6 +146,13 @@
 !
  Write(*,*) '    - The ice model harmonics are broken in to ', & 
                    NSLOTS, ' small piece(s) '
+
+ write(*,*) 'ice model: ', ICE_MODEL
+
+ CALL EXECUTE_COMMAND_LINE("pwd")
+ CALL EXECUTE_COMMAND_LINE("ls")
+ write(*,*) ""
+ CALL EXECUTE_COMMAND_LINE("cat data.inc")
 !
 ! ----------------------------------------------------------------------- 
 !
@@ -363,6 +375,82 @@
 11013       CONTINUE	
 !
 !
+
+
+!#      -------------------------------------------- ----------------------
+!#====> An ice sheet like ICESHEET - pretty much the same setup as ICE1 (I hope)
+!#      -------------------------------------------- ----------------------
+
+!
+	ELSEIF(ICE_MODEL(1:8)=='icesheet') THEN 
+! 
+!#---- Reading the header lines  	    	
+            open(10,file=ice_model,status='unknown') 
+            do j=1, NHE 
+		   if(j==4) THEN ! this line contains the latitude spacing (also longitude spacing)
+			read(10,*) latitude_spacing
+		   else
+	            read(10,'(a20)') cj
+		   endif
+	    enddo
+!	    
+!#---- Reading co-latitudes and longitudes of the ice elements  	    	
+       	    do i=1, nel   
+       		read (10,*) longitude, latitude
+       		tetac(i)=90. - latitude ! colatitude
+			if(longitude < 0. ) THEN
+				longc(i)=360.0 + longitude
+			else
+				longc(i) = longitude
+			endif
+            enddo
+            write(*,*) '    - Read ', nel, ' elements from ', ice_model
+	    close(10) 	
+!
+!#---- Shape factors  	    		
+!
+           conv=pi/180.
+	   ! FIXED by DM August 18, 2011 - MAXE initialization for ROMINT  
+	   maxe=1000000
+	   eps=1.d-6
+!
+	  ICESHEET_LOOP: DO KS=1, NSLOTS 
+!
+	   do i=lo(ks), hi(ks)
+	       t1= (tetac(i)-latitude_spacing/2.)*conv
+	       t2= (tetac(i)+latitude_spacing/2.)*conv 
+!
+	   do j=1, jmax
+	    	ll=lj(j)
+	   	mm=mj(j)  
+!	    	if(mod(j,20)==0)& 
+!	   		Write(*,*)"    - Shape factors for degree ", j, " of ", jmax 		   
+!
+	       if(mm==0) c = cmplx(latitude_spacing*conv,0.)  
+	       if(mm/=0) then 
+		       dap=float(mm)*(longc(i)+latitude_spacing/2.)
+		       dam=float(mm)*(longc(i)-latitude_spacing/2.)
+		       c = dcmplx(sindd(dap)-sindd(dam),cosdd(dap)-cosdd(dam))/float(mm)
+		       endif
+	       c=c/4.0/pi  
+	       call romint (s, err, eps, t1, t2, nnro, maxe, funclm)
+!	       
+! it was: pppp(j,i)= c*s
+!
+		!if(i.ge.lo(KS).and.i.le.hi(KS)) write(100+KS,*) j, i, c*s
+		
+		 pppp(j,i-(ks-1)*slot_size)=c*s
+		 
+            end do
+	    end do
+	    
+	   write(100+ks) pppp    
+
+	end do ICESHEET_LOOP
+
+
+
+
 !#     ----------------------
 !#====> An ice sheet like ICE5
 !#     ----------------------

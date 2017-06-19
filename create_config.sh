@@ -61,7 +61,7 @@ cat << END_CAT > VSC/${earth_model_filename}
 '${upper_mantle_viscosity}'
 END_CAT
 
-calculate_SH=n
+calculate_SH=y
 
 ####################################
 # Ice model parameters
@@ -69,12 +69,12 @@ calculate_SH=n
 
 # ice models should be located in the folder "ICE-MODELS"
 
-ice_file="ice5g.dat"
+ice_file="icesheet_1"
 
 prepare_ice_SH_file="${calculate_SH}" # y/n - using an existing spherical harmonics file will decrease computation time significantly
-ice_SH_file="ice5g-l${max_degree}.dat" 
+ice_SH_file="${ice_file}-l${max_degree}.dat" 
 
-ice_model_time_step="1.0" # in kyr, SELEN can only do constant steps in the ice model
+ice_model_time_step="5.0" # in kyr, SELEN can only do constant steps in the ice model
 
 
 ####################################
@@ -129,9 +129,9 @@ GS Aug 7 2008
 10 Name of region:                'North America RSL'
 -------------------------------------------------------------
 20 Time of analysis (BP, units of 1 ka):   '20.'
-30 Range in longitude (deg)                      '-160' '-10'  
+30 Range in longitude (deg)                      '-170' '-5'  
 40 Range in latitude (deg)                        '35' '85'  
-50 Lon-lat increment  (deg)                      '0.5' 
+50 Lon-lat increment  (deg)                      '1.0' 
 60 Bounds & contour interval (m):       '-1.' '1.' '0.25'  
 -------------------------------------------------------------  
 EOF
@@ -141,7 +141,7 @@ END_CAT
 # create config file for SELEN
 ####################################
 
-cat << END_CAT > bin/config.dat
+cat << END_CAT > run/config.dat
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   This is file "config.dat" for SELEN 2.9 - 
@@ -267,9 +267,15 @@ Modes:  1= Gravitationally self-consistent (GSC)
 290    Rate of change of SC & range of degrees for plot      'n'  '2'  '20'
 END_CAT
 
+cp run/config.dat .
+
+
+
 echo "running config"
 PATH="$(pwd)/bin":"${PATH}"
 cd run
+
+which config.exe
 
 config.exe
 
