@@ -668,7 +668,7 @@ ELSEIF (ice_file(1:5)=='anu05') then
 
 ELSEIF (ice_file(1:8)=='icesheet') then  ! output from ICESHEET
 !
-       ice_flag=1 ; ninc='30' ; header_lines=7 ; IMUL=1 ;  titlice='ICESHEET'
+       ice_flag=1 ; header_lines=7 ; IMUL=1 ;  titlice='ICESHEET'
 
 	 xfile='../ICE-MODELS/'//trim(adjustl(ice_file))
 	 open(18,file=xfile,status='old')
@@ -682,7 +682,9 @@ ELSEIF (ice_file(1:8)=='icesheet') then  ! output from ICESHEET
 	read(18,*) maximum_time, dummy1
 	read(18,*) time_interval, dummy1
 	ninc_integer =  nint(maximum_time / time_interval) - 1
-	read(ninc,'(I3)') ninc_integer
+
+	write(dummy1,*) ninc_integer
+	ninc = adjustl(trim(dummy1))
 
 	close(unit=18)
 

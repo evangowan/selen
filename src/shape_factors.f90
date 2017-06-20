@@ -85,7 +85,9 @@
 !#---- Declarations for "ICESHEET"
        INTEGER, PARAMETER :: NHE=7 
 	 REAL*8 :: longitude, latitude, latitude_spacing
-	
+	 integer :: NLON_icesheet, NLAT_icesheet, ILON_icesheet, ILAT_icesheet
+	 
+	 
 !
 !#---- Declarations for "ICE1"
        INTEGER, PARAMETER :: NH1=20
@@ -339,7 +341,8 @@
 	    close(10)
 !
 !#---- Degree-dependent factors
-	    do 41 i=1, nel	  
+	    do 41 i=1, nel
+
 	        call pleg(lmax+1, 90.-alfa(i), leg) 	  
 	        t(0,i)=(1.-cosdd(alfa(i)))/2.
 	        do 41 l=1, lmax
@@ -347,6 +350,7 @@
 41          continue
 !
 !#---- Shape factors  	
+
 	    DO 11013 KS=1, NSLOTS 
 !
 	    	write(*,*)'    - Writing on file ', broken_ice_file(KS) 
@@ -382,7 +386,7 @@
 !#      -------------------------------------------- ----------------------
 
 !
-	ELSEIF(ICE_MODEL(1:8)=='icesheet') THEN 
+	ELSEIF(ICE_MODEL(1:8)=='bcesheet') THEN ! edited out for now 
 ! 
 !#---- Reading the header lines  	    	
             open(10,file=ice_model,status='unknown') 
@@ -413,10 +417,16 @@
 	   ! FIXED by DM August 18, 2011 - MAXE initialization for ROMINT  
 	   maxe=1000000
 	   eps=1.d-6
+	write(6,*) "calculate shape factors"
 !
 	  ICESHEET_LOOP: DO KS=1, NSLOTS 
+		
+
+		write(6,*) "Slot number: ", KS, " out of ", NSLOTS  
 !
 	   do i=lo(ks), hi(ks)
+		
+		write(6,*) ks, ": i: ", i, " out of ", hi(ks), "jmax:", jmax
 	       t1= (tetac(i)-latitude_spacing/2.)*conv
 	       t2= (tetac(i)+latitude_spacing/2.)*conv 
 !
@@ -424,8 +434,8 @@
 	    	ll=lj(j)
 	   	mm=mj(j)  
 !	    	if(mod(j,20)==0)& 
-!	   		Write(*,*)"    - Shape factors for degree ", j, " of ", jmax 		   
-!
+!	   		Write(6,*) i, "out of", hi(ks), ": - Shape factors for degree ", j, " of ", jmax 		   
+
 	       if(mm==0) c = cmplx(latitude_spacing*conv,0.)  
 	       if(mm/=0) then 
 		       dap=float(mm)*(longc(i)+latitude_spacing/2.)
@@ -450,6 +460,113 @@
 
 
 
+
+
+
+
+!#     ----------------------
+!#====> ! making icesheet run like ice5g
+!#     ----------------------
+
+	ELSEIF(ICE_MODEL(1:8)=='icesheet') THEN 
+!
+!#---- Reading the header lines  	    	
+            open(10,file=ice_model,status='unknown') 
+            do j=1, NHE 
+		   if(j==4) THEN ! this line contains the latitude spacing (also longitude spacing)
+			read(10,*) latitude_spacing
+		   else
+	            read(10,'(a20)') cj
+		   endif
+	    enddo
+
+	  NLON_icesheet = nint(360. / latitude_spacing)
+	  NLAT_icesheet = nint(180. / latitude_spacing)
+
+	  if(allocated(active)) THEN
+		deallocate(active)
+		allocate(active(NLON_icesheet, NLAT_icesheet))
+	  endif
+!	    
+!#---- Reading longitudes and latitudes of the ice elements            
+	    active(:,:)=0 	
+       	do i=1, nel
+       		Read (10,*) longc(i), latic(i)
+
+			if(longc(i) < 0.) THEN
+			  longc(i) = 360. + longc(i)
+			endif
+
+			ilon = nint(longc(i) / latitude_spacing)
+			ilat = nint((90. - latic(i))/latitude_spacing)
+
+       		active(ilon,ilat)=1
+		end do
+            write(*,*)'    - Read ', nel, '  elements from ', ice_model
+	    close(10) 
+!
+!#---- Shape factors 
+	    i=0 
+	    ks=1
+!
+	    lat_icesheet: do ilat=1, NLAT_icesheet 
+	      lon_icesheet: do ilon=1, NLON_icesheet	
+!
+	    IF(ACTIVE(ILON,ILAT)==1) THEN 
+! 	
+	    i=i+1 
+!
+	    if(mod(i,5000)==0)& 
+	    write(*,*)'    - Shape factors for element ', i, ' of ', nel 
+!
+! --- Half-amplitude of the disc load with equal area of the quadrilateral 	
+	    alfa(i)=acos(1.-sindd(90.-latic(i))*sindd(latitude_spacing/2.)*latitude_spacing/180.)*180./pi
+!
+! --- New Plm's are computed only when latitude changes		 
+	    if(i==1.or.(i>=2.and.latic(i)/=latic(i-1))) then 
+	       call pleg(lmax+1, 90.-alfa(i), leg) 
+               call plmbar_mod(lmax, latic(i), pplm)
+            endif  
+!
+! --- Degree-dependent factors	 
+	    t(0,i)=(1.-cosdd(alfa(i)))/2.
+	    do l = 1, lmax
+	     	 t(l,i)= (-leg(l+1)+leg(l-1))/(2.*l+1.)/2.
+	    enddo 
+!
+!#--- Shape factors by rotation 		 
+!
+!#--- Filling the broken ice files to avoid memory issues when the 
+!     maximum harmonic degree is "large"  ------- May 2010 ------- 
+!
+! If ice element "i" is found in some slot, the slot file is updated 
+! with the shape factor of degree "j" for the ice element "i"  - The 
+! large array "PPPP" is not necessary anymore.  
+!  
+
+
+!$OMP PARALLEL DO DEFAULT(NONE) &
+!$OMP    PRIVATE(J,ARG) SHARED(LONGC,PPPP,T,I,PPLM,KS) &
+!$OMP        SCHEDULE(GUIDED)
+     do j=1, jmax
+         arg=mj(j)*longc(i)
+         pppp(j,i-(ks-1)*slot_size)=t(lj(j),i)*pplm(j)*cmplx(cosdd(arg),-sindd(arg))
+     end do
+!$OMP END PARALLEL DO
+!
+	 
+!
+! --- Detect a 'slot change'
+!
+     if( i.eq.hi(ks) ) then
+            write(100+ks) pppp      ! Dump the current SLOT
+            ks = ks + 1             ! Increment slot counter
+     end if
+
+     ENDIF ! active elements 
+!
+	end do lon_icesheet
+  end do lat_icesheet  
 
 !#     ----------------------
 !#====> An ice sheet like ICE5

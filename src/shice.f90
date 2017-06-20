@@ -104,6 +104,7 @@
 !#---- Reading the time-dependent thickness of the ice elements 
 !	    	
        	    DO 10 I=1, NEL   
+
 !	    
 !#---- "ICE1" ----             	    
 	    IF    (ICE_MODEL(1:4)=='ice1') THEN 
@@ -154,6 +155,7 @@
 !#---- "ICESHEET" ----
 	    ELSEIF    (ICE_MODEL(1:8)=='icesheet') THEN 
         	   Read (10,*) longitude, latitude,                (icr(k),k=nn,0,-1) 
+
 		   cr(:)=icr(:)	
 !
 !#---- "End of available ice models..." 
