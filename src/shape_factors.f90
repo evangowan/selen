@@ -151,10 +151,10 @@
 
  write(*,*) 'ice model: ', ICE_MODEL
 
- CALL EXECUTE_COMMAND_LINE("pwd")
- CALL EXECUTE_COMMAND_LINE("ls")
- write(*,*) ""
- CALL EXECUTE_COMMAND_LINE("cat data.inc")
+ !CALL EXECUTE_COMMAND_LINE("pwd")
+ !CALL EXECUTE_COMMAND_LINE("ls")
+ !write(*,*) ""
+! CALL EXECUTE_COMMAND_LINE("cat data.inc")
 !
 ! ----------------------------------------------------------------------- 
 !

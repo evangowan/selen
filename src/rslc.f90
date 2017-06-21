@@ -47,6 +47,7 @@
  INCLUDE "data.inc"
  CHARACTER*20, PARAMETER :: FILEOUT1 = 'rslc-cont.dat'
  CHARACTER*20, PARAMETER :: FILEOUT2 = 'rslc.dat'
+ CHARACTER*20, PARAMETER :: FILEOUT3 = 'rsl_spreadsheet.dat'
  CHARACTER*20 DATE, TIMC                
  CHARACTER*22 FILENAME 
  CHARACTER*42 JUNK
@@ -124,6 +125,7 @@
 !
 ! --- rslc.f: relative sea level change at the sites...' 
 	Open(11,file=FILEOUT1,status='unknown')
+	Open(115,file=FILEOUT3,status='unknown')
 !Write(*,*) & 
 !"    - rslc.f: Computing RSL change at the <<RSL sites>> from file ", fileout1  
  	do i=1, nrslc
@@ -132,13 +134,20 @@
 		do k=0, nn
 		     rsl = -(slc(i,nn)-slc(i,nn-k))
 		     Write(11,'(f10.4,1x,f10.4)') float(k)*DELTA, rsl
+			if(lons(i) <= 180.0) THEN
+			  write(115,'(4(f10.4,1x))') float(k)*DELTA, lons(i), lats(i), rsl
+			else
+			  write(115,'(4(f10.4,1x))') float(k)*DELTA, lons(i)-360., lats(i), rsl
+			endif
 		enddo
 	enddo
 	Close(11) 
+	close(115)
 !
 !
 ! --- rscl.f: filter the RSL values corresponding to the desired time BP 
 	Open(3, file=FILEOUT2,status='unknown') 	
+
 !
 !     Header for FILEOUT2
 	Write(3,*) '01 Relative- Sea Level at time ', time_bpc 

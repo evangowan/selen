@@ -681,7 +681,7 @@ ELSEIF (ice_file(1:8)=='icesheet') then  ! output from ICESHEET
 
 	read(18,*) maximum_time, dummy1
 	read(18,*) time_interval, dummy1
-	ninc_integer =  nint(maximum_time / time_interval) - 1
+	ninc_integer =  nint(maximum_time / time_interval) 
 
 	write(dummy1,*) ninc_integer
 	ninc = adjustl(trim(dummy1))
@@ -2882,6 +2882,7 @@ ENDIF
  		Write(2,*) "cp ", trim(adjustl(file_region)), " "//depot//"/rsl/rsl-contours/"
 		Write(2,*) "mv lonlat_rslc.dat", " "//depot//"/rsl/rsl-contours/"	
 		Write(2,*) "mv rslc-cont.dat", " "//depot//"/rsl/rsl-contours/"
+		Write(2,*) "mv rsl_spreadsheet.dat", " "//depot//"/rsl/rsl-contours/"
 		Write(2,*) "mv rslc.dat", " "//depot//"/rsl/rsl-contours/"
 		Write(2,*) "/bin/rm -f shrslc.bin"
 		Write(2,*) "mv ", trim(adjustl(file_gmt)), " "//depot//"/rsl/rsl-contours/"	
@@ -3774,7 +3775,7 @@ END
         CHARACTER*100 SS(10) 
         CHARACTER*200 LINE
 	INTEGER, PARAMETER :: LARGE_INTEGER = 100
-	INTEGER, PARAMETER :: MAXP = 19999
+	INTEGER, PARAMETER :: MAXP = 40000 !19999
         INTEGER J, N, IERR, NOUT
 	INTEGER ILAT, ILON, I_LON_MAX, I_LAT_MAX
 	REAL*8 TIME, LON_LAT_INC, LON, LAT, LON_MIN, LON_MAX, LAT_MIN, LAT_MAX
