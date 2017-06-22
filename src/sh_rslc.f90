@@ -35,12 +35,14 @@
 !
 !
 ! INCLUDE "harmonics.f90"
+
  PROGRAM S
  INCLUDE "data.inc"
- INTEGER I, J
+ INTEGER :: I, J
  REAL*8, ALLOCATABLE :: LONS(:), LATS(:)
- COMPLEX*16, ALLOCATABLE :: Y(:,:)
-!
+ COMPLEX*16, ALLOCATABLE :: Y_1(:) !Y(:,:)
+ integer :: counter, counter2
+ integer, parameter :: notification_count = 100
 !
 !
 !------ sh_rslc.f: reading the coordinates of the RSL 
@@ -50,27 +52,55 @@
 !-- Allocate memory
 !
    allocate( lons(nrslc), lats(nrslc) )
-   allocate( y(jmax,nrslc) )
+!   allocate( y(jmax,nrslc) )
+   allocate( y_1(jmax) )
+   
 !
    write(*,*) '    - Number of virtual RSL sites:', nrslc
+   write(6,*) "jmax: ", jmax
+   write(6,*) "warning, will require: ", dble(jmax)  * ((dble(NRSLC) * 16.0) /(1024.0 * 1024.0 * 1024.0)), " GB of memory"
      
    OPEN(1,FILE=RSLC_FILE,STATUS='unknown')
+
+  open(7,file='shrslc.bin',status='replace',form='unformatted', access="direct", recl = 16) 
+   counter = 0
+   counter2 = 1
    do i=1, NRSLC 
+
+	if(counter2 == notification_count) then
+	  write(6,*) "sh_rslc.exe: completed ", i, " out of ", NRSLC
+	  write(6,*) "memory used: ", dble(counter) * 16. /(1024. * 1024. * 1024.), " GB"
+	  counter2=1
+	else
+	  counter2 = counter2 + 1
+	endif
+
    		read(1,*) lons(i), lats(i) 
 !If(mod(i,500)==0) & 
 !write(*,*) '    - sh_rslc.f:', i, '<<RSL sites>> of', nrslc
-                call harmo(lmax, lons(i), lats(i), y(:,i)) 		   
+                !call harmo(lmax, lons(i), lats(i), y(:,i)) 
+
+		call harmo(lmax, lons(i), lats(i), y_1(:)) 	
+
+		do j = 1, jmax
+
+			counter = counter + 1
+			write(7,rec=counter) y_1(j)
+
+		end do 
+  
    enddo
 !
 !
 !
 !write(*,*) "    - sh_rslc.f: the harmonics are written on file 'shrslc.bin'"
-  open(7,file='shrslc.bin',status='unknown',form='unformatted') 
-  write(7) y
+!  open(7,file='shrslc.bin',status='unknown',form='unformatted') 
+!  write(7) y
   close(7) 
 !
   deallocate( lons, lats )
-  deallocate( y )
+!  deallocate( y )
+  deallocate( y_1 )
 !
  END PROGRAM S
 !

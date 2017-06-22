@@ -52,17 +52,20 @@
  CHARACTER*22 FILENAME 
  CHARACTER*42 JUNK
  COMPLEX*16, ALLOCATABLE :: YY(:,:), S(:,:), U(:,:), N(:,:) 
- REAL*8, ALLOCATABLE :: LONS(:), LATS(:), SLC(:,:)
+ REAL*8, ALLOCATABLE :: LONS(:), LATS(:), SLC_1(:) !, SLC(:,:)
  REAL*8 LON, LAT, RSL, TIME
- INTEGER I, J, K, DOM 
+ complex*16 :: YY_1
+ INTEGER I, J, K, DOM, record_number ! DOM is actually a function
+ integer :: counter, counter2
+ integer, parameter :: notification_count = 100
 !    
 !
 !
 !
 !
 ! --- Allocate dynamic arrays
- ALLOCATE( YY(JMAX,NRSLC), S(JMAX,0:NN), U(JMAX,0:NN), N(JMAX,0:NN) )
- ALLOCATE( LONS(NRSLC), LATS(NRSLC), SLC(NRSLC,0:NN) )
+ ALLOCATE(  S(JMAX,0:NN), U(JMAX,0:NN), N(JMAX,0:NN) ) !YY(JMAX,NRSLC),
+ ALLOCATE( LONS(NRSLC), LATS(NRSLC), SLC_1(0:NN) )! SLC(NRSLC,0:NN) )
 !
 ! --- Reads the coordinates of RSL "sites"
         OPEN(1,FILE=RSLC_FILE,STATUS='unknown')
@@ -77,12 +80,14 @@
 	filename='shrslc.bin'
 !Write(*,*) & 
 !"    - rslc.f: reading the SH at the <<RSL sites>> from file ", filename
-	open(7,file=filename,status='unknown',form='unformatted') 
-	read(7) yy
-	close(7)
-	do j=1,jmax 
-		yy(j,:)=yy(j,:)*(2-dom(j))
-	enddo
+	open(7,file=filename,status='old',form='unformatted', access="direct", recl=16) 
+!	read(7) yy
+!	close(7)
+!	do j=1,jmax 
+!		yy(j,:)=yy(j,:)*(2-dom(j))
+!	enddo
+
+
 !
 !
 ! --- rslc.f: reading the sealevel CSH coefficients ', filename 
@@ -115,24 +120,42 @@
 ! --- rslc.f: sealevel change at the sites...'
   	Write(*,*) "    - Computing sealevel change at virtual RSL sites in file ", & 
 	trim(adjustl(fileout1))
+
+	Open(11,file=FILEOUT1,status='unknown')
+	Open(115,file=FILEOUT3,status='unknown')
+
+	counter2=1
 	do i=1, nrslc
-		slc(i,:) = 0. 
-	do j=1, jmax
-		slc(i,:) = slc(i,:) + real(s(j,:)*yy(j,i)) 
-	enddo
-	enddo
+
+
+		if(counter2 == notification_count) then
+		  write(6,*) "sh_rslc.exe: completed ", i, " out of ", NRSLC
+
+		  counter2=1
+		else
+		  counter2 = counter2 + 1
+		endif
+
+		slc_1(:) = 0. 
+		do j=1, jmax
+     !		yy(j,:)=yy(j,:)*(2-dom(j))
+			record_number = jmax * (i-1) + j
+			read(7,rec=record_number) yy_1
+			yy_1 = yy_1 * cmplx(2-dom(j))
+			slc_1(:) = slc_1(:) + real(s(j,:)*yy_1) 
+		enddo
+!!!	enddo
 !
 !
 ! --- rslc.f: relative sea level change at the sites...' 
-	Open(11,file=FILEOUT1,status='unknown')
-	Open(115,file=FILEOUT3,status='unknown')
+
 !Write(*,*) & 
 !"    - rslc.f: Computing RSL change at the <<RSL sites>> from file ", fileout1  
- 	do i=1, nrslc
+! 	do i=1, nrslc
 	Write(11,'(a16,i5,a1,i5,5x,a10,2(f10.4,1x))') & 	
 	'RSL <<site>>    ', i, '/', nrslc, "  lon-lat:", lons(i), lats(i)
 		do k=0, nn
-		     rsl = -(slc(i,nn)-slc(i,nn-k))
+		     rsl = -(slc_1(nn)-slc_1(nn-k))
 		     Write(11,'(f10.4,1x,f10.4)') float(k)*DELTA, rsl
 			if(lons(i) <= 180.0) THEN
 			  write(115,'(4(f10.4,1x))') float(k)*DELTA, lons(i), lats(i), rsl
@@ -143,6 +166,7 @@
 	enddo
 	Close(11) 
 	close(115)
+	close(7)
 !
 !
 ! --- rscl.f: filter the RSL values corresponding to the desired time BP 
@@ -173,8 +197,9 @@
         close(11)
         close(3)	
 !
- DEALLOCATE( YY, S, U, N )
- DEALLOCATE( LONS, LATS, SLC )
+! DEALLOCATE( YY, S, U, N )
+ DEALLOCATE(  S, U, N )
+ DEALLOCATE( LONS, LATS, SLC_1) !SLC )
 !
  END PROGRAM SL
 !
