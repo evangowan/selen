@@ -2870,7 +2870,7 @@ ENDIF
 		Write(2,*) "echo"					            			    
 		Write(2,*) " echo '---> RSLC.F90: Regional RSL contour lines'"
 		Write(2,*) "#echo  ----------------------------------"
-	        Write(2,*) "shrslc.exe"
+!	        Write(2,*) "shrslc.exe"
 		Write(2,*) "rslc.exe" 
 		file_gmt='rslc.gmt'
 		Call MAKE_RSLC (TIME_BPCC, MIN_RSLC, MAX_RSLC, RSL_INT, & 
@@ -2884,7 +2884,7 @@ ENDIF
 		Write(2,*) "mv rslc-cont.dat", " "//depot//"/rsl/rsl-contours/"
 		Write(2,*) "mv rsl_spreadsheet.dat", " "//depot//"/rsl/rsl-contours/"
 		Write(2,*) "mv rslc.dat", " "//depot//"/rsl/rsl-contours/"
-		Write(2,*) "/bin/rm -f shrslc.bin"
+!		Write(2,*) "/bin/rm -f shrslc.bin"
 		Write(2,*) "mv ", trim(adjustl(file_gmt)), " "//depot//"/rsl/rsl-contours/"	
 		if(option_gmt=='y') Write(2,*) "mv rslc-map.ps", " "//depot//"/rsl/rsl-contours/"
 		Write(2,*) "mv rslc*.tmp", " "//depot//"/rsl/rsl-contours/"							  

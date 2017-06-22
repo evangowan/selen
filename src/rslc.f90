@@ -51,7 +51,7 @@
  CHARACTER*20 DATE, TIMC                
  CHARACTER*22 FILENAME 
  CHARACTER*42 JUNK
- COMPLEX*16, ALLOCATABLE :: YY(:,:), S(:,:), U(:,:), N(:,:) 
+ COMPLEX*16, ALLOCATABLE :: YY(:,:), S(:,:), U(:,:), N(:,:), YY_2(:) 
  REAL*8, ALLOCATABLE :: LONS(:), LATS(:), SLC_1(:) !, SLC(:,:)
  REAL*8 LON, LAT, RSL, TIME
  complex*16 :: YY_1
@@ -64,7 +64,7 @@
 !
 !
 ! --- Allocate dynamic arrays
- ALLOCATE(  S(JMAX,0:NN), U(JMAX,0:NN), N(JMAX,0:NN) ) !YY(JMAX,NRSLC),
+ ALLOCATE(  S(JMAX,0:NN), U(JMAX,0:NN), N(JMAX,0:NN), YY_2(JMAX) ) !YY(JMAX,NRSLC),
  ALLOCATE( LONS(NRSLC), LATS(NRSLC), SLC_1(0:NN) )! SLC(NRSLC,0:NN) )
 !
 ! --- Reads the coordinates of RSL "sites"
@@ -80,7 +80,7 @@
 	filename='shrslc.bin'
 !Write(*,*) & 
 !"    - rslc.f: reading the SH at the <<RSL sites>> from file ", filename
-	open(7,file=filename,status='old',form='unformatted', access="direct", recl=16) 
+	!open(7,file=filename,status='old',form='unformatted', access="direct", recl=16) 
 !	read(7) yy
 !	close(7)
 !	do j=1,jmax 
@@ -129,7 +129,7 @@
 
 
 		if(counter2 == notification_count) then
-		  write(6,*) "sh_rslc.exe: completed ", i, " out of ", NRSLC
+		  write(6,*) "rslc.f90: completed ", i, " out of ", NRSLC
 
 		  counter2=1
 		else
@@ -137,12 +137,16 @@
 		endif
 
 		slc_1(:) = 0. 
+
+		call harmo(lmax, lons(i), lats(i), yy_2(:)) 
+		
+
 		do j=1, jmax
      !		yy(j,:)=yy(j,:)*(2-dom(j))
 			record_number = jmax * (i-1) + j
-			read(7,rec=record_number) yy_1
-			yy_1 = yy_1 * cmplx(2-dom(j))
-			slc_1(:) = slc_1(:) + real(s(j,:)*yy_1) 
+!			read(7,rec=record_number) yy_1
+			yy_2(j) = yy_2(j) * cmplx(2-dom(j))
+			slc_1(:) = slc_1(:) + real(s(j,:)*yy_2(j)) 
 		enddo
 !!!	enddo
 !
@@ -166,7 +170,7 @@
 	enddo
 	Close(11) 
 	close(115)
-	close(7)
+!	close(7)
 !
 !
 ! --- rscl.f: filter the RSL values corresponding to the desired time BP 
@@ -199,6 +203,7 @@
 !
 ! DEALLOCATE( YY, S, U, N )
  DEALLOCATE(  S, U, N )
+ deallocate(yy_2)
  DEALLOCATE( LONS, LATS, SLC_1) !SLC )
 !
  END PROGRAM SL
