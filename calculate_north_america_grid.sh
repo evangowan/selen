@@ -1,9 +1,7 @@
 #! /bin/bash
 
-# this script must be run prior to running all the other scripts
-
 # purge working directory? y/n
-purge="y"
+purge="n"
 
 ####################################
 # Sea level calculatio parameters
@@ -35,7 +33,7 @@ frame_center="CM" # Reference frame center is center of mass "CM" or center of E
 
 tegmark_resolution=44 # 44 is lots for degrees 128 and 256, might need to increase to about 48 if you go to 512 to meet the requirements of equation 34 in the SELEN manual
 
-new_pixel_file="y"
+new_pixel_file="n"
 pixel_file_name="px-table-r${tegmark_resolution}.dat"
 
 ####################################
@@ -63,7 +61,7 @@ cat << END_CAT > VSC/${earth_model_filename}
 '${upper_mantle_viscosity}'
 END_CAT
 
-calculate_SH=y
+calculate_SH=n
 
 ####################################
 # Ice model parameters
@@ -103,8 +101,6 @@ ocean_SH_file="of-l${max_degree}.dat"
 
 depot_name="TEST"
 
-# so we don't get a massive file
-rm DEPOTS/depot-${depot_name}/rsl/rsl-contours/rsl_spreadsheet.dat
 
 ####################################
 # output options
@@ -114,7 +110,7 @@ rm DEPOTS/depot-${depot_name}/rsl/rsl-contours/rsl_spreadsheet.dat
 
 # files should be located in the "DATA" folder
 
-Regional_RSL_contour="n" # y/n
+Regional_RSL_contour="y" # y/n
 Regional_RSL_contour_file="rsl-region.dat"
 
 
@@ -243,7 +239,7 @@ Modes:  1= Gravitationally self-consistent (GSC)
 
 ====> RSL REGIONS -------------------------------------------------------------
 250    Gobal RSL zones  	                           'n'
-251    Regional RSL contour lines                           '${Regional_RSL_contour}'   'rsl-region.dat'
+251    Regional RSL contour lines                           '${Regional_RSL_contour}'   '${Regional_RSL_contour_file}'
 
 ====> SEA LEVEL CHANGE AT TIDE-GAUGE STATIONS --------------------------------- 
 260    Tide-gauge (TG) analysis & database                    'n' 'rlr-trends.txt'      
@@ -273,11 +269,4 @@ END_CAT
 
 
 make run
-
-
-mv -f run/${ocean_SH_file} INPUTS/
-mv -f run/${pixel_SH_file} INPUTS/
-mv -f run/${ice_SH_file} INPUTS/
-
-
 
