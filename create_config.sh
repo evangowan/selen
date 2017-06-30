@@ -2,6 +2,9 @@
 
 # this script must be run prior to running all the other scripts
 
+# copy the icesheet output file 
+icesheet_out_file=/scratch/users/egowan-local/icesheet/github/global/selen_input/icesheet_Evan_ehgk_2_I_I
+
 # purge working directory? y/n
 purge="y"
 
@@ -24,7 +27,7 @@ SL_mode=1
 
 # maximum harmonic degrees
 
-max_degree=128
+max_degree=256
 
 # Reference frame
 
@@ -71,7 +74,8 @@ calculate_SH=y
 
 # ice models should be located in the folder "ICE-MODELS"
 
-ice_file="icesheet_1"
+ice_file="icesheet"
+cp -f ${icesheet_out_file} ICE-MODELS/${ice_file}
 
 prepare_ice_SH_file="${calculate_SH}" # y/n - using an existing spherical harmonics file will decrease computation time significantly
 ice_SH_file="${ice_file}-l${max_degree}.dat" 
@@ -91,7 +95,8 @@ pixel_SH_file="sh-r${tegmark_resolution}-l${max_degree}.bin"
 # Compute spherical harmonics decomposition of ocean
 ####################################
 
-prepare_ocean_SH_file="${calculate_SH}" # y/n - using an existing spherical harmonics file will decrease computation time significantly
+# don't need to calculate ocean here, can use different earth models in later scripts.
+prepare_ocean_SH_file="n" # y/n - using an existing spherical harmonics file will decrease computation time significantly
 ocean_SH_file="of-l${max_degree}.dat" 
 
 

@@ -86,7 +86,7 @@
        INTEGER, PARAMETER :: NHE=7 
 	 REAL*8 :: longitude, latitude, latitude_spacing
 	 integer :: NLON_icesheet, NLAT_icesheet, ILON_icesheet, ILAT_icesheet
-	 
+	 integer :: number_active
 	 
 !
 !#---- Declarations for "ICE1"
@@ -142,7 +142,8 @@
 !       
        broken_ice_file(KS)='shice_broken_'//labchar//'.dat'
 !
-       Open(100+KS,file=broken_ice_file(KS),status='unknown',form='unformatted')	
+	write(6,*) "opening file: ", trim(broken_ice_file(KS))
+       Open(100+KS,file=broken_ice_file(KS),status='replace',form='unformatted')	
 !
 2 CONTINUE
 !
@@ -489,7 +490,8 @@
 	  endif
 !	    
 !#---- Reading longitudes and latitudes of the ice elements            
-	    active(:,:)=0 	
+	    active(:,:)=0 
+	
        	do i=1, nel
        		Read (10,*) longc(i), latic(i)
 
@@ -500,10 +502,25 @@
 			ilon = nint(longc(i) / latitude_spacing)
 			ilat = nint((90. - latic(i))/latitude_spacing)
 
+			if(active(ilon,ilat) == 1) THEN
+				write(6,*) "coordinate already read in!"
+				write(6,*) i, longc(i), latic(i)
+				stop
+			endif
+
        		active(ilon,ilat)=1
+
 		end do
             write(*,*)'    - Read ', nel, '  elements from ', ice_model
 	    close(10) 
+	  number_active = sum(active)
+	  if(number_active == nel) THEN
+		write(6,*) "the number of active elements is equal to the number of elements"
+	  else
+		write(6,*) "the number of active elements is not equal to the number of elements"
+		write(6,*) number_active, " /= ", nel
+		stop
+	  endif
 !
 !#---- Shape factors 
 	    i=0 
@@ -559,14 +576,18 @@
 ! --- Detect a 'slot change'
 !
      if( i.eq.hi(ks) ) then
+		write(6,*) "Writing slot: ", ks, " out of ", NSLOTS
             write(100+ks) pppp      ! Dump the current SLOT
             ks = ks + 1             ! Increment slot counter
+		write(6,*) "next range:", lo(ks), " - ", hi(ks)
      end if
 
      ENDIF ! active elements 
 !
 	end do lon_icesheet
   end do lat_icesheet  
+
+	write(6,*) "final i: ", i, "out of ", nel
 
 !#     ----------------------
 !#====> An ice sheet like ICE5

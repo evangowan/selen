@@ -2882,7 +2882,14 @@ ENDIF
  		Write(2,*) "cp ", trim(adjustl(file_region)), " "//depot//"/rsl/rsl-contours/"
 		Write(2,*) "mv lonlat_rslc.dat", " "//depot//"/rsl/rsl-contours/"	
 		Write(2,*) "mv rslc-cont.dat", " "//depot//"/rsl/rsl-contours/"
-		Write(2,*) "mv rsl_spreadsheet.dat", " "//depot//"/rsl/rsl-contours/"
+
+		write(2,*) 'if [ ! -f ', ' "'//depot//'/rsl/rsl-contours/rsl_spreadsheet.dat" ]' 
+		write(2,*) "then" 
+		Write(2,*) "  mv rsl_spreadsheet.dat", " "//depot//"/rsl/rsl-contours/"
+		write(2,*) "else" 
+		Write(2,*) "  cat rsl_spreadsheet.dat >>", " "//depot//"/rsl/rsl-contours/rsl_spreadsheet.dat"
+		write(2,*) "fi" 	
+
 		Write(2,*) "mv rslc.dat", " "//depot//"/rsl/rsl-contours/"
 !		Write(2,*) "/bin/rm -f shrslc.bin"
 		Write(2,*) "mv ", trim(adjustl(file_gmt)), " "//depot//"/rsl/rsl-contours/"	

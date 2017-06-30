@@ -22,7 +22,7 @@ SL_mode=1
 
 # maximum harmonic degrees
 
-max_degree=128
+max_degree=256
 
 # Reference frame
 
@@ -69,12 +69,12 @@ calculate_SH=n
 
 # ice models should be located in the folder "ICE-MODELS"
 
-ice_file="icesheet_1"
+ice_file="icesheet"
 
 prepare_ice_SH_file="${calculate_SH}" # y/n - using an existing spherical harmonics file will decrease computation time significantly
 ice_SH_file="${ice_file}-l${max_degree}.dat" 
 
-ice_model_time_step="5.0" # in kyr, SELEN can only do constant steps in the ice model
+ice_model_time_step="1.0" # in kyr, SELEN can only do constant steps in the ice model
 
 
 ####################################
@@ -89,7 +89,7 @@ pixel_SH_file="sh-r${tegmark_resolution}-l${max_degree}.bin"
 # Compute spherical harmonics decomposition of ocean
 ####################################
 
-prepare_ocean_SH_file="${calculate_SH}" # y/n - using an existing spherical harmonics file will decrease computation time significantly
+prepare_ocean_SH_file="y" # y/n - using an existing spherical harmonics file will decrease computation time significantly
 ocean_SH_file="of-l${max_degree}.dat" 
 
 
