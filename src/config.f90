@@ -1478,6 +1478,37 @@ IF(line(1:3)=="251") THEN
 			Call Stop_Config 
 			stop		 
 		endif 
+	
+	else if(option_rslc=='i') THEN ! i for individual sites
+
+        INQUIRE(FILE=file_region,EXIST=lex)
+!
+	  If(lex) then
+!
+                Write(88,*) "<<RSL contour lines>> will be drawn" 
+		    Write(88,*) "The RSL region is described in file ", file_region
+
+
+	          file_region_lonlat='lonlat_rslc.dat'
+
+  	          Call scan_region2 (file_region, file_region_lonlat, nrslc)	
+
+	          LEN_RSLC = len(trim(adjustl(file_region_lonlat)))
+	          RSLC_LONLAT_FILE     = "'"//trim(adjustl(file_region_lonlat))//"'"	
+!
+                Write(88,*) "There are ", nrslc, " points in file ", trim(adjustl(file_region)) 
+		    Write(88,*) "Coordinates of RSL <<sites>> are reported on file ", & 
+		             trim(adjustl(file_region_lonlat))	
+
+   	  else 
+                Write(*, *) "File ", trim(adjustl(file_region)), " apparently"
+		    Write(*, *) "does not exist -  Please check file <config.dat>"
+                Write(88,*) "File ", trim(adjustl(file_region)), " apparently"
+		    Write(88,*) "does not exist -  Please check file <config.dat>"
+		    Call Stop_Config 
+		    stop		 
+	  endif 
+
 	endif 
 ENDIF
 !
@@ -2060,6 +2091,7 @@ Write(2,*) "mkdir ",depot//"/rsl/rsl-misfit/"
 Write(2,*) "mkdir ",depot//"/rsl/rsl-table/"
 Write(2,*) "mkdir ",depot//"/rsl/rsl-zones/"
 Write(2,*) "mkdir ",depot//"/rsl/rsl-contours/"
+Write(2,*) "mkdir ",depot//"/rsl/rsl-isites/"
 Write(2,*) "mkdir ",depot//"/tgauges/"
 Write(2,*) "mkdir ",depot//"/tgauges/tgauges-sites/"
 Write(2,*) "mkdir ",depot//"/tgauges/tgauges-scplots/"
@@ -2896,6 +2928,32 @@ ENDIF
 		if(option_gmt=='y') Write(2,*) "mv rslc-map.ps", " "//depot//"/rsl/rsl-contours/"
 		Write(2,*) "mv rslc*.tmp", " "//depot//"/rsl/rsl-contours/"							  
 		if(option_gmt=='y') Write(2,*) "mv pal_rslc.cpt", " "//depot//"/rsl/rsl-contours/"	
+	ELSE IF (option_rslc=='i') then
+
+		Write(2,*) " "
+		Write(2,*) "#echo  ----------------------------------"
+		Write(2,*) "echo"					            			    
+		Write(2,*) " echo '---> RSLC.F90: Regional RSL site locations'"
+		Write(2,*) "#echo  ----------------------------------"
+!	        Write(2,*) "shrslc.exe"
+		Write(2,*) "rslc.exe" 	
+
+
+ 		Write(2,*) "cp ", trim(adjustl(file_region)), " "//depot//"/rsl/rsl-isites/"
+		Write(2,*) "mv lonlat_rslc.dat", " "//depot//"/rsl/rsl-isites/"	
+		Write(2,*) "mv rslc-cont.dat", " "//depot//"/rsl/rsl-isites/"
+
+		write(2,*) 'if [ ! -f ', ' "'//depot//'/rsl/rsl-isites/rsl_spreadsheet.dat" ]' 
+		write(2,*) "then" 
+		Write(2,*) "  mv rsl_spreadsheet.dat", " "//depot//"/rsl/rsl-isites/"
+		write(2,*) "else" 
+		Write(2,*) "  cat rsl_spreadsheet.dat >>", " "//depot//"/rsl/rsl-isites/rsl_spreadsheet.dat"
+		write(2,*) "fi" 	
+
+		Write(2,*) "mv rslc.dat", " "//depot//"/rsl/rsl-isites/"
+
+
+
 	ENDIF
 !
 !
@@ -3937,6 +3995,135 @@ END
 !
 !
 !
+
+
+    SUBROUTINE SCAN_REGION2 (FILEIN, FILEOUT, N)
+	IMPLICIT NONE
+!	
+! # Scans "FILEIN" to retrieve information upon the number of points and 
+!   time for the rsl contour analysis     === GS January 28, 2007 ===
+!
+
+	CHARACTER*30 :: FILEIN, FILEOUT
+	INTEGER, PARAMETER :: MAXP = 40000 !19999
+	REAL*8 :: LON, LAT, LON_MIN, LON_MAX, LAT_MIN, LAT_MAX
+	integer :: istat, counter, N
+	real*8, allocatable, dimension(:) :: lon_array, lat_array
+
+	! first read in the file to find out how many points there are
+
+	open(70,file=filein,status='old')
+
+	N = 0
+	read_file: do
+
+		read(70,*, iostat=istat) lon, lat
+		if(istat /= 0) THEN
+			exit read_file
+		end if
+
+		N = N + 1
+
+	end do read_file
+
+	If(N>=MAXP) then 
+        	Write(*, *) "The total number of points in file ", trim(adjustl(filein)), " is", N
+		Write(*, *) "this exceeds the maximum allowed (i. e.,", MAXP, ")" 
+        	Write(88,*) "The total number of points in file ", trim(adjustl(filein)), " is", N 
+		Write(88,*) "this exceeds the maximum allowed (i. e.,", MAXP, ")" 
+        	Call Stop_Config 
+	Endif	
+
+	rewind(unit=70)
+
+	allocate(lon_array(N), lat_array(N))
+
+	N = 1
+	read(70,*, iostat=istat) lon, lat
+
+	if(lon < 0.) THEN
+		lon = 360. + lon
+	endif 
+	lon_array(N) = lon
+	lat_array(N) = lat
+
+
+	LON_MIN = lon
+	LON_MAX = lon
+	LAT_MIN = lat
+	LAT_MAX = lat
+
+
+	read_file2: do
+
+		read(70,*, iostat=istat) lon, lat
+		if(istat /= 0) THEN
+			exit read_file2
+		end if
+
+		if(lon < 0.) THEN
+			lon = 360. + lon
+		endif 
+
+		N = N + 1
+		lon_array(N) = lon
+		lat_array(N) = lat
+
+
+		if(lon < LON_MIN) THEN
+			LON_MIN = lon
+		endif
+
+		if(lon > LON_MAX) THEN
+			LON_MAX = lon
+		endif
+		if(lat < LAT_MIN) THEN
+			LAT_MIN = lat
+		endif
+
+		if(lat > LAT_MAX) THEN
+			LAT_MAX = lat
+		endif
+
+		! check for duplicates because it takes a long time to calculate sea level at each location
+
+		check_duplicate: do counter = 1, N-1, 1
+
+			if(lon_array(counter) == lon .and. lat_array(counter) == lat) THEN
+				N = N - 1
+				exit check_duplicate
+			endif
+
+
+		end do check_duplicate
+
+	end do read_file2
+
+	close(unit=70)
+
+	If(N>=MAXP) then 
+        	Write(*, *) "The total number of points in file ", trim(adjustl(filein)), " is", N
+		Write(*, *) "this exceeds the maximum allowed (i. e.,", MAXP, ")" 
+        	Write(88,*) "The total number of points in file ", trim(adjustl(filein)), " is", N 
+		Write(88,*) "this exceeds the maximum allowed (i. e.,", MAXP, ")" 
+        	Call Stop_Config 
+	Endif	
+	
+	! write out the results
+      open(71,file=fileout,status='replace') 	
+
+	do counter=1, N, 1
+
+		write(71,*) lon_array(counter), lat_array(counter)
+
+	end do
+	close(unit=71) 
+
+	deallocate(lon_array, lat_array)
+	
+
+   End subroutine scan_region2
+
 !
 !
    	Subroutine make_eslplot (ninc, titlice, shof_file, file_gmt)
