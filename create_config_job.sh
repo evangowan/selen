@@ -1,5 +1,5 @@
 #! /bin/bash
-#SBATCH --time=02:20:00
+#SBATCH --time=03:00:00
 #SBATCH --ntasks=1
 #SBATCH --mem=10G
 #SBATCH --output=selen_config.out
@@ -15,4 +15,6 @@ echo "SLURM_ARRAY_JOB_ID:  $SLURM_ARRAY_JOB_ID"
 
 srun create_config.sh
 
+srun calculate_north_america_grid.sh
 
+srun calculate_north_america_sl.sh
