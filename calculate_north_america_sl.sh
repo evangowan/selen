@@ -4,11 +4,11 @@
 purge="n"
 
 ####################################
-# Sea level calculatio parameters
+# Sea level calculation parameters
 ####################################
 
 # number of interations for the solution of the sea level equation. From my experience 5 is the best for production runs, but 3 might be ok for topography.
-iterations=3
+iterations=5
 
 # Calculation modes, 1 is likely the best
 #Modes:  1= Gravitationally self-consistent (GSC)
