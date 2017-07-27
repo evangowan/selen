@@ -2250,6 +2250,7 @@ Write(2,*) " "
  Write(2,*) "pxrec.exe"
  Write(2,*) "cp px-table.dat ", depot//"/px" 
  Write(2,*) "cp px-table.dat ", trim(file_pxtable)
+ write(2,*) "cp -f px-table.dat ../INPUTS/" // adjustl(trim(file_pxtable))
 !
 !
  else                                ! Re-use an OLD pixelization
