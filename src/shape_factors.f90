@@ -87,6 +87,7 @@
 	 REAL*8 :: longitude, latitude, latitude_spacing
 	 integer :: NLON_icesheet, NLAT_icesheet, ILON_icesheet, ILAT_icesheet
 	 integer :: number_active
+	 real*8 :: interior_stuff
 	 
 !
 !#---- Declarations for "ICE1"
@@ -478,6 +479,7 @@
 			read(10,*) latitude_spacing
 		   else
 	            read(10,'(a20)') cj
+
 		   endif
 	    enddo
 
@@ -537,7 +539,22 @@
 	    write(*,*)'    - Shape factors for element ', i, ' of ', nel 
 !
 ! --- Half-amplitude of the disc load with equal area of the quadrilateral 	
-	    alfa(i)=acos(1.-sindd(90.-latic(i))*sindd(latitude_spacing/2.)*latitude_spacing/180.)*180./pi
+
+	    interior_stuff = sindd(90.-latic(i))*sindd(latitude_spacing/2.)*latitude_spacing/180.
+	    if(abs(interior_stuff) < 1e-9) THEN ! probably rounding issues
+		interior_stuff = 0.0
+	    endif
+
+	    alfa(i)=acos(1.-interior_stuff)*180./pi
+
+			if(isnan( alfa(i))) then
+				write(6,*) "alfa", i, " isnan"
+				write(6,*) "latitude:", latic(i)
+				write(6,*) "longitude:", longc(i)
+				write(6,*) "sindd(90.-latic(i)):", sindd(90.-latic(i))
+				write(6,*) "latitude_spacing:", latitude_spacing
+				stop
+			endif
 !
 ! --- New Plm's are computed only when latitude changes		 
 	    if(i==1.or.(i>=2.and.latic(i)/=latic(i-1))) then 
@@ -549,6 +566,12 @@
 	    t(0,i)=(1.-cosdd(alfa(i)))/2.
 	    do l = 1, lmax
 	     	 t(l,i)= (-leg(l+1)+leg(l-1))/(2.*l+1.)/2.
+
+
+			if(isnan( t(l,i))) then
+			!	write(6,*) "t", l, i, " isnan"
+				!stop
+			endif
 	    enddo 
 !
 !#--- Shape factors by rotation 		 
