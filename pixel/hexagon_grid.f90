@@ -3,14 +3,27 @@ module hexagon_grid
 	implicit none
 ! this module contains the variables and subroutines that define the Tegmark grid
 
+	! derived type describing the points of a polygon, used to simulate a linked list
+	type polygon_point
+
+		double precision :: x
+		double precision :: y
+		integer :: next_index
+
+	end type polygon_point
+
+
 	double precision, save :: x_min, x_max, y_min, y_max, grid_radius
 	integer, save :: number_hexagons
 	integer, parameter :: hexagon_points = 6
 
 	double precision, allocatable, dimension(:) :: hexagon_x, hexagon_y
-	double precision, allocatable, dimension(:,:) :: hexagon_corner_x, hexagon_corner_y
+	type(polygon_point), allocatable, dimension(:,:) :: hexagon
+
+	
 
 	double precision, parameter :: pi = 3.14159265359
+
 
 contains
 
@@ -21,7 +34,9 @@ subroutine definine_grid(x_min_in, x_max_in, y_min_in, y_max_in, grid_radius_in)
 	integer :: large_hexagon_row, hexagon_column, number_est_hexagons, counter
 
 	integer :: shift_direction
-	double precision :: x_temp, y_temp, x_temp_hex(hexagon_points), y_temp_hex(hexagon_points), angle, x_last, y_last
+	double precision :: x_temp, y_temp, angle, x_last, y_last
+	type(polygon_point), dimension(6) :: temp_hex(hexagon_points)
+
 
 	logical :: done, add_hex
 
@@ -43,8 +58,7 @@ subroutine definine_grid(x_min_in, x_max_in, y_min_in, y_max_in, grid_radius_in)
 
 	number_est_hexagons = large_hexagon_row * hexagon_column ! should be a maximum estimate, but not too far off
 
-	allocate(hexagon_x(number_est_hexagons), hexagon_y(number_est_hexagons), hexagon_corner_x(number_est_hexagons, hexagon_points),&
-	  hexagon_corner_y(number_est_hexagons, hexagon_points))
+	allocate(hexagon_x(number_est_hexagons), hexagon_y(number_est_hexagons), hexagon(number_est_hexagons, hexagon_points))
 
 	number_hexagons = 1
 
@@ -54,7 +68,7 @@ subroutine definine_grid(x_min_in, x_max_in, y_min_in, y_max_in, grid_radius_in)
 	y_last = hexagon_y(number_hexagons)
 
 	call hexagon_coordinates(hexagon_x(number_hexagons), hexagon_y(number_hexagons), grid_radius, &
-        hexagon_corner_x(number_hexagons,:), hexagon_corner_y(number_hexagons,:))
+        hexagon(number_hexagons,:))
 
 	done = .false.
 
@@ -65,13 +79,13 @@ subroutine definine_grid(x_min_in, x_max_in, y_min_in, y_max_in, grid_radius_in)
 		if(shift_direction > 0) THEN
 			x_temp = x_last + grid_radius * 2
 			y_temp = y_last
-			call hexagon_coordinates(x_temp, y_temp, grid_radius, x_temp_hex, y_temp_hex)
+			call hexagon_coordinates(x_temp, y_temp, grid_radius, temp_hex)
 
-			if(x_temp_hex(3) > x_max .and. x_temp_hex(4) > x_max) THEN ! shift y up
+			if(temp_hex(3)%x > x_max .and. temp_hex(4)%x > x_max) THEN ! shift y up
 				x_temp = x_temp + 2.0 * grid_radius * cos(pi / 3.0)
 				y_temp = y_temp + 2.0 * grid_radius * sin(pi / 3.0)
 
-				call hexagon_coordinates(x_temp, y_temp, grid_radius, x_temp_hex, y_temp_hex)
+				call hexagon_coordinates(x_temp, y_temp, grid_radius, temp_hex)
 				shift_direction = -1.0
 			endif
 
@@ -80,13 +94,13 @@ subroutine definine_grid(x_min_in, x_max_in, y_min_in, y_max_in, grid_radius_in)
 		else
 			x_temp = x_last - grid_radius * 2
 			y_temp = y_last
-			call hexagon_coordinates(x_temp, y_temp, grid_radius, x_temp_hex, y_temp_hex)
+			call hexagon_coordinates(x_temp, y_temp, grid_radius, temp_hex)
 
-			if(x_temp_hex(1) < x_min .and. x_temp_hex(6) < x_min) THEN ! shift y up
+			if(temp_hex(1)%x < x_min .and. temp_hex(6)%x < x_min) THEN ! shift y up
 				x_temp = x_temp - 2.0 * grid_radius * cos(pi / 3.0)
 				y_temp = y_temp + 2.0 * grid_radius * sin(pi / 3.0)
 
-				call hexagon_coordinates(x_temp, y_temp, grid_radius, x_temp_hex, y_temp_hex)
+				call hexagon_coordinates(x_temp, y_temp, grid_radius, temp_hex)
 				shift_direction = 1.0
 			endif
 
@@ -98,14 +112,14 @@ subroutine definine_grid(x_min_in, x_max_in, y_min_in, y_max_in, grid_radius_in)
 		add_hex = .false.
 
 		do counter = 1, hexagon_points, 1
-			if (x_temp_hex(counter) > x_min .and. x_temp_hex(counter) < x_max) THEN
+			if (temp_hex(counter)%x > x_min .and. temp_hex(counter)%x < x_max) THEN
 				add_hex = .true.
 			endif
 		end do
 
 		! check if it goes above the y range
 
-		if (y_temp_hex(5) >= y_max) THEN
+		if (temp_hex(3)%y >= y_max) THEN
 			done = .true.
 		endif
 	
@@ -115,8 +129,8 @@ subroutine definine_grid(x_min_in, x_max_in, y_min_in, y_max_in, grid_radius_in)
 
 			hexagon_x(number_hexagons) = x_temp
 			hexagon_y(number_hexagons) = y_temp
-			hexagon_corner_x(number_hexagons,:) = x_temp_hex(:)
-			hexagon_corner_y(number_hexagons,:) = y_temp_hex(:)
+			hexagon(number_hexagons,:) = temp_hex(:)
+
 		endif
 
 		x_last = x_temp
@@ -129,14 +143,15 @@ end subroutine definine_grid
 
 subroutine hexagon_grid_clear()
 
-	deallocate(hexagon_x, hexagon_y, hexagon_corner_x, hexagon_corner_y)
+	deallocate(hexagon_x, hexagon_y, hexagon)
 
 end subroutine hexagon_grid_clear
 
-subroutine hexagon_coordinates(x, y, radius, corners_x, corners_y)
+subroutine hexagon_coordinates(x, y, radius, corners)
+
 	implicit none
 	double precision, intent(in) :: x, y, radius
-	double precision, dimension(hexagon_points), intent(out) :: corners_x, corners_y
+	type(polygon_point), dimension(hexagon_points), intent(out) :: corners
 
 	double precision :: angle, dx, dy, distance
 
@@ -148,27 +163,40 @@ subroutine hexagon_coordinates(x, y, radius, corners_x, corners_y)
 
 !	write(6,*) "length: ", 2.0 * radius * tan(angle)
 
-	corners_x(1) = x + dx
-	corners_y(1) = y + dy
+	! clockwise for the Weiler–Atherton clipping algorithm
 
-	corners_x(3) = x - dx
-	corners_y(3) = y + dy
+	corners(1)%x = x + dx
+	corners(1)%y = y + dy
+      corners(1)%next_index = 2
 
-	corners_x(4) = x - dx
-	corners_y(4) = y - dy
-
-	corners_x(6) = x + dx
-	corners_y(6) = y - dy
+	corners(2)%x = x + dx
+	corners(2)%y = y - dy
+      corners(2)%next_index = 3
 
 	! other two corners, I can just use the length from one of the previous corners
 
-	distance = sqrt( (corners_x(1) - x)**2 + (corners_y(1) - y)**2)
+	distance = sqrt( (corners(1)%x - x)**2 + (corners(1)%y - y)**2)
 
-	corners_x(2) = x
-	corners_y(2) = y + distance
+	corners(3)%x = x
+	corners(3)%y = y - distance
+      corners(3)%next_index = 4
 
-	corners_x(5) = x
-	corners_y(5) = y - distance
+
+	corners(4)%x = x - dx
+	corners(4)%y = y - dy
+      corners(4)%next_index = 5
+
+
+
+	corners(5)%x = x - dx
+	corners(5)%y = y + dy
+      corners(5)%next_index = 6
+
+	corners(6)%x = x
+	corners(6)%y = y + distance
+      corners(6)%next_index = 1
+
+
 	
 
 end subroutine hexagon_coordinates

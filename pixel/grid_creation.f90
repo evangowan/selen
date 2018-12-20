@@ -37,18 +37,17 @@ program grid_creation
 
 		write(point_unit,*) hexagon_x(counter), hexagon_y(counter)
 		write(out_unit,'(A1)') ">"
-		write(out_unit,*) hexagon_corner_x(counter,hexagon_points), hexagon_corner_y(counter,hexagon_points)
-		last_x = hexagon_corner_x(counter,hexagon_points)
-		last_y = hexagon_corner_y(counter,hexagon_points)
+		write(out_unit,*) hexagon(counter,hexagon_points)%x, hexagon(counter,hexagon_points)%y
+!		last_x = hexagon_corner_x(counter,hexagon_points)
+!		last_y = hexagon_corner_y(counter,hexagon_points)
 		do counter2 = 1, hexagon_points
 		
-			write(out_unit,*) hexagon_corner_x(counter,counter2), hexagon_corner_y(counter,counter2), &
-				sqrt((hexagon_corner_x(counter,counter2))**2 + (hexagon_corner_y(counter,counter2))**2)
+			write(out_unit,*) hexagon(counter,counter2)%x, hexagon(counter,counter2)%y
 
-			distance = sqrt( (hexagon_corner_x(counter,counter2) - last_x)**2 + (hexagon_corner_y(counter,counter2) - last_y)**2)
+!			distance = sqrt( (hexagon_corner_x(counter,counter2) - last_x)**2 + (hexagon_corner_y(counter,counter2) - last_y)**2)
 !			write(6,*) distance
-			last_x = hexagon_corner_x(counter,counter2)
-			last_y = hexagon_corner_y(counter,counter2)
+!			last_x = hexagon_corner_x(counter,counter2)
+!			last_y = hexagon_corner_y(counter,counter2)
 		end do
 	end do
 
