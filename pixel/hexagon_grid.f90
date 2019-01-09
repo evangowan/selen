@@ -21,7 +21,7 @@ module hexagon_grid
 	type(polygon_point), allocatable, dimension(:,:) :: hexagon
 
 	
-
+	double precision, parameter :: epsilon_factor = 1.0e-7
 	double precision, parameter :: pi = 3.14159265359
 
 
@@ -200,5 +200,17 @@ subroutine hexagon_coordinates(x, y, radius, corners)
 	
 
 end subroutine hexagon_coordinates
+
+logical function same_point(point_a, point_b)
+	implicit none
+	type(polygon_point), intent(in) :: point_a, point_b
+
+	if(abs(point_a%x-point_b%x) < epsilon_factor .and. abs(point_a%y-point_b%y) < epsilon_factor) THEN
+		same_point = .true.
+	else
+		same_point = .false.
+	endif
+
+end function same_point
 
 end module hexagon_grid
