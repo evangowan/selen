@@ -40,8 +40,13 @@ program test_overlap
 
 	end do
 	
-	square2(1)%x = square1(1)%x
-	square2(1)%y = square1(1)%y
+!	square2(1)%x = square1(1)%x
+!	square2(1)%y = square1(1)%y
+
+!	square2(2)%x = square1(2)%x
+!	square2(2)%y = square1(2)%y
+
+!	square2 = square1
 
 	call overlapping_polygon_sub(square1, 4, square2, 4, overlap, 8, size3_out, warning)
 
@@ -67,14 +72,19 @@ program test_overlap
 		end do
 		write(6,*) square2(1)%x, square2(1)%y
 
-		write(6,*) ">"
-		do counter = 1, size3_out
 
-			write(6,*) overlap(counter)%x, overlap(counter)%y
+		if(size3_out > 0) THEN
+			write(6,*) ">"
+			do counter = 1, size3_out
+
+				write(6,*) overlap(counter)%x, overlap(counter)%y
 
 
-		end do	
-		write(6,*) overlap(1)%x, overlap(1)%y
+			end do	
+			write(6,*) overlap(1)%x, overlap(1)%y
+		else
+			write(6,*) "no overlap"
+		endif
 
 
 	end if
