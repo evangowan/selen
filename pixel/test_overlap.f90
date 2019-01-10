@@ -5,7 +5,7 @@ program test_overlap
 
 	implicit none
 
-	type(polygon_point), dimension(4) :: square1, square2
+	type(polygon_point), dimension(4) :: square1, square2, temp_square
 	type(polygon_point), dimension(8) ::  overlap
 
 	integer :: counter, size3_out
@@ -27,8 +27,8 @@ program test_overlap
 		square1(counter)%x = corner_x(counter)
 		square1(counter)%y = corner_y(counter)
 
-		square2(counter)%x = corner_x(counter) + 0.5
-		square2(counter)%y = corner_y(counter) + 0.5
+		square2(counter)%x = corner_x(counter) - 1
+		square2(counter)%y = corner_y(counter) !- 1
 
 		if(counter < 4) THEN
 			square1(counter)%next_index = counter + 1
@@ -40,13 +40,70 @@ program test_overlap
 
 	end do
 	
+
+
+!	corner_x(1) = -1.
+!	corner_x(2) = 2.
+!	corner_x(3) = 2.
+!	corner_x(4) = -1.
+	
+!	corner_y(1) = -1.
+!	corner_y(2) = -1.
+!	corner_y(3) = 2.
+!	corner_y(4) = 2. 
+
+!	do counter = 1, 4
+
+
+!		square2(counter)%x = corner_x(counter)
+!		square2(counter)%y = corner_y(counter)
+
+!		if(counter < 4) THEN
+
+!			square2(counter)%next_index = counter + 1
+!		else
+
+!			square2(counter)%next_index = 1
+!		endif
+
+!	end do
+
 !	square2(1)%x = square1(1)%x
 !	square2(1)%y = square1(1)%y
 
 !	square2(2)%x = square1(2)%x
 !	square2(2)%y = square1(2)%y
 
-!	square2 = square1
+	corner_x(1) = -0.4
+	corner_x(2) = 0.5
+	corner_x(3) = 1.4
+	corner_x(4) = 0.5
+	
+	corner_y(1) = 0.5
+	corner_y(2) = -0.4
+	corner_y(3) = 0.5
+	corner_y(4) = 1.4 
+
+	do counter = 1, 4
+
+
+		square2(counter)%x = corner_x(counter)
+		square2(counter)%y = corner_y(counter)
+
+		if(counter < 4) THEN
+
+			square2(counter)%next_index = counter + 1
+		else
+
+			square2(counter)%next_index = 1
+		endif
+
+	end do
+
+
+	temp_square = square1
+	square1 = square2
+	square2 = temp_square	
 
 	call overlapping_polygon_sub(square1, 4, square2, 4, overlap, 8, size3_out, warning)
 
