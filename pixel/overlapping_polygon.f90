@@ -70,6 +70,8 @@ subroutine overlapping_polygon_sub(polygon1, size1, polygon2, size2, overlap_pol
 		overlapping(overlap_counter)%next_index(p1) = overlap_counter + 1
 		overlapping(overlap_counter)%next_index(p2) = 0 
 		overlapping(overlap_counter)%next_index(p3) = 0
+!		write(6,*) overlap_counter, current_point
+!		write(6,*) overlapping(overlap_counter)%x, overlapping(overlap_counter)%y, polygon1(current_point)%x, polygon1(current_point)%y
 
 		overlapping(overlap_counter)%inside1 = point_in_polygon(polygon2, size2, polygon1(current_point))
 		if(.not. overlapping(overlap_counter)%inside1) THEN
@@ -87,6 +89,21 @@ subroutine overlapping_polygon_sub(polygon1, size1, polygon2, size2, overlap_pol
 	overlapping(overlap_counter-1)%next_index(p1) = start_polygon1
 	start_polygon2 = overlap_counter
 
+	current_point = start_polygon1
+!	write(6,*) "checking"
+!	check_loop: do
+
+!		write(6,*) overlapping(current_point)%x, overlapping(current_point)%y, &
+!		 overlapping(overlapping(current_point)%next_index(1))%x,&
+!		 overlapping(overlapping(current_point)%next_index(1))%y
+
+!		current_point = overlapping(current_point)%next_index(1)
+!		if(current_point == start_polygon1) THEN
+!			exit check_loop
+!		endif
+
+!	end do check_loop
+
 	current_point = 1
 
 	all_inside2 = .true.
@@ -98,6 +115,12 @@ subroutine overlapping_polygon_sub(polygon1, size1, polygon2, size2, overlap_pol
 		overlapping(overlap_counter)%next_index(p1) = 0
 		overlapping(overlap_counter)%next_index(p2) = overlap_counter + 1
 		overlapping(overlap_counter)%next_index(p3) = 0
+
+
+!		write(6,*) overlap_counter, current_point
+!		write(6,*) overlapping(overlap_counter)%x, overlapping(overlap_counter)%y, polygon2(current_point)%x, polygon2(current_point)%y
+
+
 		overlapping(overlap_counter)%crossover = .false.
 
 		overlapping(overlap_counter)%inside2 = point_in_polygon(polygon1, size1, polygon2(current_point))
@@ -115,6 +138,22 @@ subroutine overlapping_polygon_sub(polygon1, size1, polygon2, size2, overlap_pol
 
 	overlapping(overlap_counter-1)%next_index(p2) = start_polygon2
 
+
+!	current_point = start_polygon2
+!	write(6,*) "checking2"
+!	check_loop2: do
+
+!		write(6,*) overlapping(current_point)%x, overlapping(current_point)%y, &
+!		 overlapping(overlapping(current_point)%next_index(2))%x,&
+!		 overlapping(overlapping(current_point)%next_index(2))%y
+
+!		current_point = overlapping(current_point)%next_index(2)
+!		if(current_point == start_polygon2) THEN
+!			exit check_loop2
+!		endif
+
+!	end do check_loop2
+
 	! check if there are points in the second polygon that are identical to the first polygon
 
 	current_point2 = start_polygon2
@@ -122,6 +161,12 @@ subroutine overlapping_polygon_sub(polygon1, size1, polygon2, size2, overlap_pol
 	same_check: do 
 		current_point = start_polygon1
 		loop_first: do
+!			write(6,*) "points check: ", current_point, current_point2, &
+!				same_point_wa(overlapping(current_point), overlapping(current_point2))
+!			write(6,*) overlapping(current_point)%x, overlapping(current_point)%y, &
+!			 overlapping(overlapping(current_point)%next_index(1))%x,&
+!			 overlapping(overlapping(current_point)%next_index(1))%y
+!			write(6,*) overlapping(current_point2)%x, overlapping(current_point2)%y
 
 			if(same_point_wa(overlapping(current_point), overlapping(current_point2))) THEN ! change the pointers
 
@@ -172,7 +217,7 @@ subroutine overlapping_polygon_sub(polygon1, size1, polygon2, size2, overlap_pol
 
 	check_polygon1: do
 
-		write(6,*) "polygon1: ",current_point, overlapping(current_point)%next_index(1)
+!		write(6,*) "polygon1: ",current_point, overlapping(current_point)%next_index(1)
 		current_point = overlapping(current_point)%next_index(1)
 		if(current_point == start_polygon1) THEN
 			exit check_polygon1
@@ -186,7 +231,7 @@ subroutine overlapping_polygon_sub(polygon1, size1, polygon2, size2, overlap_pol
 
 	check_polygon2: do
 
-		write(6,*) "polygon2: ",current_point2, overlapping(current_point2)%next_index(2)
+!		write(6,*) "polygon2: ",current_point2, overlapping(current_point2)%next_index(2)
 		current_point2 = overlapping(current_point2)%next_index(2)
 		if(current_point2 == start_polygon2) THEN
 			exit check_polygon2
@@ -217,13 +262,13 @@ subroutine overlapping_polygon_sub(polygon1, size1, polygon2, size2, overlap_pol
 
 
 
-			write(6,*) ">", is_crossover, temp_point_WA%x, temp_point_WA%y
-			write(6,*) overlapping(current_point)%x, overlapping(current_point)%y, &
-				overlapping(current_point2)%x, overlapping(current_point2)%y
-			write(6,*) overlapping(overlapping(current_point)%next_index(p1))%x, &
-				overlapping(overlapping(current_point)%next_index(p1))%y, &
-			      overlapping(overlapping(current_point2)%next_index(p2))%x, &
-				overlapping(overlapping(current_point2)%next_index(p2))%y
+!			write(6,*) ">", is_crossover, temp_point_WA%x, temp_point_WA%y
+!			write(6,*) overlapping(current_point)%x, overlapping(current_point)%y, &
+!				overlapping(current_point2)%x, overlapping(current_point2)%y
+!			write(6,*) overlapping(overlapping(current_point)%next_index(p1))%x, &
+!				overlapping(overlapping(current_point)%next_index(p1))%y, &
+!			      overlapping(overlapping(current_point2)%next_index(p2))%x, &
+!				overlapping(overlapping(current_point2)%next_index(p2))%y
 
 
 			if(is_crossover) THEN ! add the point
@@ -282,7 +327,7 @@ subroutine overlapping_polygon_sub(polygon1, size1, polygon2, size2, overlap_pol
 
 	end do find_intersecting
 
-	write(6,*) "found all intersectiong points"
+!	write(6,*) "found all intersectiong points"
 
 	size3_out = 0
 	if (all_inside2) THEN ! the polygon should be the same as the clipping polygon
@@ -310,22 +355,22 @@ subroutine overlapping_polygon_sub(polygon1, size1, polygon2, size2, overlap_pol
 
 
 			if(overlapping(current_point)%crossover) THEN ! decide if it uses p1 or p2
-				write(6,*) "first point found"
+!				write(6,*) "first point found"
 				if(overlapping(overlapping(current_point)%next_index(p2))%inside2 .or. &
 			         overlapping(overlapping(current_point)%next_index(p2))%crossover) THEN ! the next point is is on the second polygon
 					overlapping(current_point)%next_index(p3) = overlapping(current_point)%next_index(p2)
 					current_point = overlapping(current_point)%next_index(p2)
-					write(6,*) "going along second polygon"
+!					write(6,*) "going along second polygon"
 				else if (overlapping(overlapping(current_point)%next_index(p1))%inside1 .or. &
 			                overlapping(overlapping(current_point)%next_index(p1))%crossover) THEN
 					overlapping(current_point)%next_index(p3) = overlapping(current_point)%next_index(p1)
 					current_point = overlapping(current_point)%next_index(p1)
-					write(6,*) "going along first polygon", overlapping(overlapping(current_point)%next_index(p1))%inside1, &
-					  overlapping(overlapping(current_point)%next_index(p1))%crossover
+!					write(6,*) "going along first polygon", overlapping(overlapping(current_point)%next_index(p1))%inside1, &
+!					  overlapping(overlapping(current_point)%next_index(p1))%crossover
 				else
 					overlapping(current_point)%next_index(p3) = current_point
 					current_point = end_point
-					write(6,*) "Single point"
+!					write(6,*) "Single point"
 
 				endif
 			else 
@@ -358,7 +403,7 @@ subroutine overlapping_polygon_sub(polygon1, size1, polygon2, size2, overlap_pol
 
 		counter = 1
 		fill_overlap: do
-			write(6,*) counter,overlapping(current_point)%next_index(p3), end_point
+!			write(6,*) counter,overlapping(current_point)%next_index(p3), end_point
 			overlap_polygon(counter)%x = overlapping(current_point)%x
 			overlap_polygon(counter)%y = overlapping(current_point)%y
 			if(overlapping(current_point)%next_index(p3) /= end_point) THEN
@@ -367,7 +412,7 @@ subroutine overlapping_polygon_sub(polygon1, size1, polygon2, size2, overlap_pol
 
 				if (counter > size3) THEN ! there will be a segmentation fault
 
-					write(6,*) "counter too large: ", counter, size3
+!					write(6,*) "counter too large: ", counter, size3
 					warning = .true.
 					exit fill_overlap
 				end if
@@ -382,13 +427,13 @@ subroutine overlapping_polygon_sub(polygon1, size1, polygon2, size2, overlap_pol
 		size3_out = counter
 
 	end if 
-	write(6,*) ">>>>>"
-	do counter = 1, overlap_counter-1
+!	write(6,*) ">>>>>"
+!	do counter = 1, overlap_counter-1
 
-		write(6,*) overlapping(counter)%x, overlapping(counter)%y, overlapping(counter)%crossover
-
-	end do
-	write(6,*) ">>>>>"
+!		write(6,*) overlapping(counter)%x, overlapping(counter)%y, overlapping(counter)%crossover
+!
+!	end do
+!	write(6,*) ">>>>>"
 
 	
 	deallocate(overlapping)
