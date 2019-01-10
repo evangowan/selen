@@ -21,7 +21,7 @@ module hexagon_grid
 	type(polygon_point), allocatable, dimension(:,:) :: hexagon
 
 	
-	double precision, parameter :: epsilon_factor = 1.0e-7
+	double precision, parameter :: epsilon_factor = 1.0e-5
 	double precision, parameter :: pi = 3.14159265359
 
 
@@ -212,5 +212,38 @@ logical function same_point(point_a, point_b)
 	endif
 
 end function same_point
+
+double precision function polygon_area(polygon, polygon_size)
+	implicit none
+	integer, intent(in) :: polygon_size
+	type(polygon_point), intent(in), dimension(polygon_size) :: polygon
+
+	integer :: counter, total_counter
+	double precision :: total
+
+	counter = 1
+	total = 0.0
+	total_counter = 1
+	! Green's theorem for determining polygon area
+	going_around: do
+
+		total = total + (polygon(polygon(counter)%next_index)%x + polygon(counter)%x ) * &
+				    (polygon(polygon(counter)%next_index)%y - polygon(counter)%y ) / 2.0
+
+		counter = polygon(counter)%next_index
+		if(counter == 1) THEN
+			exit going_around
+		endif
+
+		total_counter = total_counter + 1
+
+	end do going_around
+
+	if(total_counter >= 3) THEN
+		polygon_area = total
+	else
+		polygon_area = 0
+	endif
+end function polygon_area
 
 end module hexagon_grid

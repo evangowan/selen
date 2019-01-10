@@ -23,12 +23,22 @@ program test_overlap
 	corner_y(4) = 1. 
 
 
+!	corner_x(1) = -0.4
+!	corner_x(2) = 0.5
+!	corner_x(3) = 1.4
+!	corner_x(4) = 0.5
+	
+!	corner_y(1) = 0.5
+!	corner_y(2) = -0.4
+!	corner_y(3) = 0.5
+!	corner_y(4) = 1.4 
+
 	do counter = 1, 4
 		square1(counter)%x = corner_x(counter)
 		square1(counter)%y = corner_y(counter)
 
-		square2(counter)%x = corner_x(counter) - 1
-		square2(counter)%y = corner_y(counter) !- 1
+		square2(counter)%x = corner_x(counter) + 0.5
+		square2(counter)%y = corner_y(counter) + 0.5
 
 		if(counter < 4) THEN
 			square1(counter)%next_index = counter + 1
@@ -84,26 +94,26 @@ program test_overlap
 	corner_y(3) = 0.5
 	corner_y(4) = 1.4 
 
-	do counter = 1, 4
+!	do counter = 1, 4
 
 
-		square2(counter)%x = corner_x(counter)
-		square2(counter)%y = corner_y(counter)
+!		square2(counter)%x = corner_x(counter) + .1
+!		square2(counter)%y = corner_y(counter) + .1
 
-		if(counter < 4) THEN
+!		if(counter < 4) THEN
 
-			square2(counter)%next_index = counter + 1
-		else
+!			square2(counter)%next_index = counter + 1
+!		else
 
-			square2(counter)%next_index = 1
-		endif
+!			square2(counter)%next_index = 1
+!		endif
 
-	end do
+!	end do
 
 
-	temp_square = square1
-	square1 = square2
-	square2 = temp_square	
+!	temp_square = square1
+!	square1 = square2
+!	square2 = temp_square	
 
 	call overlapping_polygon_sub(square1, 4, square2, 4, overlap, 8, size3_out, warning)
 
@@ -145,5 +155,9 @@ program test_overlap
 
 
 	end if
+
+	write(6,*) "area_1: ", polygon_area(square1, 4)
+	write(6,*) "area_2: ", polygon_area(square2, 4)
+	write(6,*) "area_o: ", polygon_area(overlap, size3_out)
 
 end program test_overlap
