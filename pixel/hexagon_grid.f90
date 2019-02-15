@@ -17,7 +17,7 @@ module hexagon_grid
 	integer, save :: number_hexagons
 	integer, parameter :: hexagon_points = 6
 
-	double precision, allocatable, dimension(:) :: hexagon_x, hexagon_y
+	double precision, allocatable, dimension(:) :: hexagon_x, hexagon_y, hexagon_thickness
 	type(polygon_point), allocatable, dimension(:,:) :: hexagon
 
 	
@@ -50,15 +50,19 @@ subroutine definine_grid(x_min_in, x_max_in, y_min_in, y_max_in, grid_radius_in)
 	! the grid is defined to start at the bottom left corner, centered on the hexagon, and designed to ensure that the entire input
 	! regular grid is covered by hexagons
 
-	large_hexagon_row = ceiling(((x_max - x_min)/grid_radius + grid_radius)/2.0) ! plus one radii to account for the fact we are starting at the center of a hexagon
+	large_hexagon_row = ceiling(((x_max - x_min)/grid_radius + 2.0)/2.0) ! plus one radii to account for the fact we are starting at the center of a hexagon
 
 !	small_hexagon_row = large_hexagon_row - 2 ! should be true, I think
 
-	hexagon_column = ceiling((y_max-y_min) / (2.0 * grid_radius) + grid_radius)
+	hexagon_column = ceiling((y_max-y_min) / (2.0 * grid_radius) + 2.0)
+	write(6,*) large_hexagon_row, hexagon_column
 
-	number_est_hexagons = large_hexagon_row * hexagon_column ! should be a maximum estimate, but not too far off
+	number_est_hexagons = large_hexagon_row * hexagon_column * 2 ! should be a maximum estimate, but not too far off
+	write(6,*) "number_est_hexagons: ", number_est_hexagons
+	allocate(hexagon_x(number_est_hexagons), hexagon_y(number_est_hexagons), hexagon(number_est_hexagons, hexagon_points), &
+        hexagon_thickness(number_est_hexagons))
 
-	allocate(hexagon_x(number_est_hexagons), hexagon_y(number_est_hexagons), hexagon(number_est_hexagons, hexagon_points))
+	hexagon_thickness = 0
 
 	number_hexagons = 1
 
@@ -137,13 +141,13 @@ subroutine definine_grid(x_min_in, x_max_in, y_min_in, y_max_in, grid_radius_in)
 		y_last = y_temp
 
 	end do
-
+	write(6,*) "actual number of hexagons: ", number_hexagons
 
 end subroutine definine_grid
 
 subroutine hexagon_grid_clear()
 
-	deallocate(hexagon_x, hexagon_y, hexagon)
+	deallocate(hexagon_x, hexagon_y, hexagon, hexagon_thickness)
 
 end subroutine hexagon_grid_clear
 
@@ -213,6 +217,62 @@ logical function same_point(point_a, point_b)
 
 end function same_point
 
+subroutine print_polygon(polygon, polygon_size, thickness, out_unit)
+	implicit none
+	integer, intent(in) :: polygon_size, out_unit
+	type(polygon_point), intent(in), dimension(polygon_size) :: polygon
+	double precision, intent(in) :: thickness
+	integer :: counter
+	character(len=80) :: temp_string
+
+	write (temp_string, '(F20.8)') thickness
+
+	temp_string =  ">-Z" //  adjustl(temp_string)
+	write(out_unit,'(A80)') temp_string
+
+	counter = 1
+	going_around: do
+
+		write(out_unit,*) polygon(counter)%x, polygon(counter)%y
+		counter = polygon(counter)%next_index
+		if(counter == 1) THEN
+			exit going_around
+		endif
+	end do going_around
+
+end subroutine print_polygon
+
+subroutine polygon_extremes(polygon, polygon_size, poly_x_min, poly_x_max, poly_y_min, poly_y_max)
+	implicit none
+	integer, intent(in) :: polygon_size
+	type(polygon_point), intent(in), dimension(polygon_size) :: polygon
+	double precision, intent(out) :: poly_x_min, poly_x_max, poly_y_min, poly_y_max
+	integer :: counter
+
+	counter = 1
+
+	! initialize
+	poly_x_min = polygon(counter)%x
+	poly_x_max = polygon(counter)%x
+	poly_y_min = polygon(counter)%y
+	poly_y_max = polygon(counter)%y
+
+	going_around: do
+
+		poly_x_min = min(polygon(counter)%x,poly_x_min)
+		poly_x_max = max(polygon(counter)%x,poly_x_max)
+		poly_y_min = min(polygon(counter)%y,poly_y_min)
+		poly_y_max = max(polygon(counter)%y,poly_y_max)
+		counter = polygon(counter)%next_index
+		if(counter == 1) THEN
+			exit going_around
+		endif
+	end do going_around
+
+
+end subroutine polygon_extremes
+	
+
 double precision function polygon_area(polygon, polygon_size)
 	implicit none
 	integer, intent(in) :: polygon_size
@@ -240,7 +300,7 @@ double precision function polygon_area(polygon, polygon_size)
 	end do going_around
 
 	if(total_counter >= 3) THEN
-		polygon_area = total
+		polygon_area = abs(total) ! since the polygon is oriented clockwise, the area will be negative in the above formula (http://mathworld.wolfram.com/PolygonArea.html)
 	else
 		polygon_area = 0
 	endif

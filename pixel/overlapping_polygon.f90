@@ -368,7 +368,7 @@ subroutine overlapping_polygon_sub(polygon1, size1, polygon2, size2, overlap_pol
 !					write(6,*) "going along first polygon", overlapping(overlapping(current_point)%next_index(p1))%inside1, &
 !					  overlapping(overlapping(current_point)%next_index(p1))%crossover
 				else
-					overlapping(current_point)%next_index(p3) = current_point
+					overlapping(current_point)%next_index(p3) = end_point !current_point
 					current_point = end_point
 !					write(6,*) "Single point"
 
@@ -406,16 +406,22 @@ subroutine overlapping_polygon_sub(polygon1, size1, polygon2, size2, overlap_pol
 !			write(6,*) counter,overlapping(current_point)%next_index(p3), end_point
 			overlap_polygon(counter)%x = overlapping(current_point)%x
 			overlap_polygon(counter)%y = overlapping(current_point)%y
+!			write(6,*) counter,current_point,overlap_polygon(counter)%x, overlap_polygon(counter)%y, &
+!				overlapping(current_point)%next_index(p3), end_point
 			if(overlapping(current_point)%next_index(p3) /= end_point) THEN
+
 				overlap_polygon(counter)%next_index = counter+1
 				counter = counter + 1
 
 				if (counter > size3) THEN ! there will be a segmentation fault
-
-!					write(6,*) "counter too large: ", counter, size3
+					counter = size3
+					write(6,*) "counter too large: ", counter, size3
 					warning = .true.
+					stop
 					exit fill_overlap
 				end if
+
+
 
 			else
 				overlap_polygon(counter)%next_index = 1

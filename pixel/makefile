@@ -21,3 +21,11 @@ overlapping_polygon.o: overlapping_polygon.f90
 
 test_overlap: test_overlap.f90 hexagon_grid.o overlapping_polygon.o
 	$(FC) -o test_overlap $(FCFLAGS) test_overlap.f90 hexagon_grid.o overlapping_polygon.o
+
+
+create_disc_file: create_disc_file.f90 hexagon_grid.o overlapping_polygon.o
+	$(FC) -o create_disc_file $(FCFLAGS)  create_disc_file.f90  hexagon_grid.o overlapping_polygon.o
+
+
+fakegrid: fakegrid.f90 hexagon_grid.o overlapping_polygon.o
+	$(FC) -o fakegrid $(FCFLAGS)  fakegrid.f90 hexagon_grid.o overlapping_polygon.o
