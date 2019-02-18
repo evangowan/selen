@@ -19,7 +19,7 @@ program fakegrid
 	double precision :: distance, inner_part
 	double precision :: hex_x_min, hex_x_max, hex_y_min, hex_y_max, grid_spacing
 
-  	double precision :: x_min_local, x_max_local, y_min_local, y_max_local, area, area_ratio
+  	double precision :: x_min_local, x_max_local, y_min_local, y_max_local, area, area_ratio, biggest, smallest
 	integer :: counter1, counter2, hex_counter, overlap_point_count
 	integer :: x_counter_start, x_counter_end, y_counter_start, y_counter_end
 	logical :: warning
@@ -46,13 +46,17 @@ program fakegrid
 	x_max_grid = 100.
 	y_min_grid = 0.
 	y_max_grid = 100.
-	hexagon_radius = 5.0
+	hexagon_radius = 1.5
 
 	call definine_grid(x_min_grid, x_max_grid, y_min_grid, y_max_grid, hexagon_radius)
 
 	open(unit=out_unit, file=out_file, access="sequential", form="formatted", status="replace")
 
+	biggest = 0.
+	smallest = 9999999.
+
 	do hex_counter = 1, number_hexagons
+!		write(6,*) "hexagon: ", hex_counter
 		call polygon_extremes(hexagon(hex_counter,:),hexagon_points,hex_x_min, hex_x_max, hex_y_min, hex_y_max)
 
 		! assume that the grid is cell centered
@@ -95,6 +99,8 @@ program fakegrid
 		do counter1 = x_counter_start, x_counter_end, 1
 			do counter2 = y_counter_start, y_counter_end, 1
 
+	!			write(6,*) ">>>>", counter1, counter2
+
 				! create grid cell polygon
 
 				grid_cell(1)%x = dble(counter1) - grid_spacing / 2.0
@@ -113,6 +119,8 @@ program fakegrid
 				grid_cell(4)%y = dble(counter2) + grid_spacing / 2.0
 				grid_cell(4)%next_index = 1
 
+!				call print_polygon(hexagon(hex_counter,:), hexagon_points, 0.d0, 6)
+!				call print_polygon(grid_cell, 4, 0.d0, 6)
 				call overlapping_polygon_sub(hexagon(hex_counter,:),hexagon_points, grid_cell, 4, overlap_polygon, overlap_size, &
                                                      overlap_point_count, warning)
 
@@ -132,9 +140,24 @@ program fakegrid
 
 			end do
 		end do
-		call print_polygon(hexagon(hex_counter,:),hexagon_points, hexagon_thickness(hex_counter), out_unit)
+
+		if(hexagon_thickness(hex_counter) > epsilon_factor) THEN ! DEFINITELY GET RID OF THIS IN THE FINAL VERSION
+			if(hexagon_thickness(hex_counter) > biggest) THEN
+				biggest = hexagon_thickness(hex_counter)
+			endif
+
+			if(hexagon_thickness(hex_counter) < smallest) THEN
+				smallest = hexagon_thickness(hex_counter)
+			endif
+			call print_polygon(hexagon(hex_counter,:),hexagon_points, hexagon_thickness(hex_counter), out_unit)
+		endif
 
 	end do
+
+	call hexagon_grid_clear()
+
+	write(6,*) "thinnest: ", smallest
+	write(6,*) "thickest: ", biggest
 
 	close(out_unit)
 

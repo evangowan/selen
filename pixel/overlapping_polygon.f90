@@ -41,11 +41,11 @@ subroutine overlapping_polygon_sub(polygon1, size1, polygon2, size2, overlap_pol
 	logical, dimension(size2) :: points_inside
 
 	integer :: counter, size_WA, start_polygon1, start_polygon2, overlap_counter, current_point, current_point2, end_point
-	integer :: counter2, current_point3
+	integer :: counter2, current_point3, start_polygon3
 
 	type(polygon_point_WA) :: temp_point_WA
 	type(polygon_point_WA), dimension(:), allocatable :: overlapping
-	logical :: is_crossover, all_inside1, all_outside1, all_inside2, all_outside2, overlap, identical
+	logical :: is_crossover, all_inside1, all_outside1, all_inside2, all_outside2, overlap, identical,endpoint_found
 
 
 	warning = .false.
@@ -258,6 +258,8 @@ subroutine overlapping_polygon_sub(polygon1, size1, polygon2, size2, overlap_pol
 				call crossover_point(overlapping(current_point), overlapping(overlapping(current_point)%next_index(p1)), &
 					    overlapping(current_point2), overlapping(overlapping(current_point2)%next_index(p2)), &
 					    temp_point_WA, is_crossover, overlap)
+
+!				write(6,*) current_point, current_point2, is_crossover, overlap, temp_point_WA%x, temp_point_WA%y
 			endif
 
 
@@ -274,24 +276,27 @@ subroutine overlapping_polygon_sub(polygon1, size1, polygon2, size2, overlap_pol
 			if(is_crossover) THEN ! add the point
 
 				if(same_point_WA(temp_point_WA,overlapping(current_point)) ) THEN ! point passes through the second polygon
-
+!					write(6,*) "point passes through the second polygon 1"
 					overlapping(current_point)%next_index(p2) = overlapping(current_point2)%next_index(p2)
 					overlapping(current_point2)%next_index(p2) = current_point
 					overlapping(current_point)%crossover = .true.
 				elseif(same_point_WA(temp_point_WA,overlapping(overlapping(current_point)%next_index(p1))) ) THEN ! point passes through the second polygon
+!					write(6,*) "point passes through the second polygon 2"
 					overlapping(overlapping(current_point)%next_index(p1))%next_index(p2) = overlapping(current_point2)%next_index(p2)
 					overlapping(current_point2)%next_index(p2) = overlapping(current_point)%next_index(p1)
 					overlapping(overlapping(current_point)%next_index(p1))%crossover = .true.
 				elseif(same_point_WA(temp_point_WA,overlapping(current_point2)) ) THEN ! point passes through the first polygon
+!					write(6,*) " point passes through the first polygon 1"
 					overlapping(current_point2)%next_index(p1) = overlapping(current_point)%next_index(p1)
 					overlapping(current_point)%next_index(p1) = current_point2
 					overlapping(current_point2)%crossover = .true.
 				elseif(same_point_WA(temp_point_WA,overlapping(overlapping(current_point2)%next_index(p2))) ) THEN ! point passes through the first polygon
+!					write(6,*) " point passes through the first polygon 2"
 					overlapping(overlapping(current_point2)%next_index(p2))%next_index(p1) = overlapping(current_point)%next_index(p1)
 					overlapping(current_point)%next_index(p1) = overlapping(current_point2)%next_index(p2)
 					overlapping(overlapping(current_point2)%next_index(p2))%crossover = .true.
 				else
-
+!					write(6,*) "other"
 					overlapping(overlap_counter) = temp_point_WA
 					overlapping(overlap_counter)%next_index(p1) = overlapping(current_point)%next_index(p1)
 					overlapping(overlap_counter)%next_index(p2) = overlapping(current_point2)%next_index(p2)
@@ -328,6 +333,7 @@ subroutine overlapping_polygon_sub(polygon1, size1, polygon2, size2, overlap_pol
 	end do find_intersecting
 
 !	write(6,*) "found all intersectiong points"
+!	call print_polygon_wa(overlapping(1:overlap_counter),overlap_counter,6)
 
 	size3_out = 0
 	if (all_inside2) THEN ! the polygon should be the same as the clipping polygon
@@ -341,32 +347,55 @@ subroutine overlapping_polygon_sub(polygon1, size1, polygon2, size2, overlap_pol
 	else ! circle around
 		current_point = start_polygon1
 		search_for_first: do
+!			write(6,*) current_point, overlapping(current_point)%next_index(1),overlapping(current_point)%crossover, &
+!				all_inside1, all_inside2, all_outside1, all_outside2
 			if(overlapping(current_point)%crossover) THEN ! found first point
 				end_point = current_point
 				exit search_for_first
 			end if
 			current_point = overlapping(current_point)%next_index(1)
 
+			if(current_point == 1) THEN
+
+				call print_polygon(polygon1,size1,0.d0,6)
+				call print_polygon(polygon2,size2,0.d0,6)
+				call print_polygon_wa(overlapping(1:overlap_counter),overlap_counter,6)
+				write(6,*) "dkjfa;lkfj;adsfklj"
+				stop	
+			endif
+
 		end do search_for_first
 
 		! now that the first point has been found, loop around
-
+!			write(6,*) "found first"
 		create_overlap: do
-
-
+!				write(6,*) "end_point: ", end_point
+!				call print_polygon_wa(overlapping(1:overlap_counter),overlap_counter,6)
 			if(overlapping(current_point)%crossover) THEN ! decide if it uses p1 or p2
-!				write(6,*) "first point found"
+
+
+
 				if(overlapping(overlapping(current_point)%next_index(p2))%inside2 .or. &
 			         overlapping(overlapping(current_point)%next_index(p2))%crossover) THEN ! the next point is is on the second polygon
-					overlapping(current_point)%next_index(p3) = overlapping(current_point)%next_index(p2)
-					current_point = overlapping(current_point)%next_index(p2)
+					if(   overlapping(overlapping(current_point)%next_index(p2))%next_index(p3) == 0) THEN
+						overlapping(current_point)%next_index(p3) = overlapping(current_point)%next_index(p2)
+						current_point = overlapping(current_point)%next_index(p2)
+					else
+						overlapping(current_point)%next_index(p3) = end_point !current_point
+						current_point = end_point
+					endif
 !					write(6,*) "going along second polygon"
 				else if (overlapping(overlapping(current_point)%next_index(p1))%inside1 .or. &
 			                overlapping(overlapping(current_point)%next_index(p1))%crossover) THEN
-					overlapping(current_point)%next_index(p3) = overlapping(current_point)%next_index(p1)
-					current_point = overlapping(current_point)%next_index(p1)
-!					write(6,*) "going along first polygon", overlapping(overlapping(current_point)%next_index(p1))%inside1, &
-!					  overlapping(overlapping(current_point)%next_index(p1))%crossover
+
+					if(   overlapping(overlapping(current_point)%next_index(p1))%next_index(p3) == 0) THEN
+						overlapping(current_point)%next_index(p3) = overlapping(current_point)%next_index(p1)
+						current_point = overlapping(current_point)%next_index(p1)
+					else
+						overlapping(current_point)%next_index(p3) = end_point !current_point
+						current_point = end_point
+					endif
+
 				else
 					overlapping(current_point)%next_index(p3) = end_point !current_point
 					current_point = end_point
@@ -400,7 +429,6 @@ subroutine overlapping_polygon_sub(polygon1, size1, polygon2, size2, overlap_pol
 		endif
 
 		! fill up the overlapping polygon
-
 		counter = 1
 		fill_overlap: do
 !			write(6,*) counter,overlapping(current_point)%next_index(p3), end_point
@@ -417,7 +445,6 @@ subroutine overlapping_polygon_sub(polygon1, size1, polygon2, size2, overlap_pol
 					counter = size3
 					write(6,*) "counter too large: ", counter, size3
 					warning = .true.
-					stop
 					exit fill_overlap
 				end if
 
@@ -576,6 +603,14 @@ subroutine crossover_point(point_a1, point_a2, point_b1, point_b2, crossover, is
 
 		return
 
+	elseif(abs(point_a2%y - point_a1%y) < epsilon_factor) then  ! first line is parallel to the x-axis
+		temp_x = (intercept2 - intercept1) / (slope1 - slope2)
+		temp_y = point_a2%y
+
+	elseif(abs(point_b2%y - point_b1%y) < epsilon_factor) then  ! second line is parallel to the x-axis
+		temp_x = (intercept2 - intercept1) / (slope1 - slope2)
+		temp_y = point_b2%y
+
 	else 
 
 		temp_x = (intercept2 - intercept1) / (slope1 - slope2)
@@ -584,6 +619,8 @@ subroutine crossover_point(point_a1, point_a2, point_b1, point_b2, crossover, is
 	endif
 
 
+	crossover%x = temp_x
+	crossover%y = temp_y
 	is_crossover = .false.
 	if(temp_x >= a_min_cell_x) THEN
 	  if(temp_x <= a_max_cell_x) THEN
@@ -595,6 +632,7 @@ subroutine crossover_point(point_a1, point_a2, point_b1, point_b2, crossover, is
 			   if(temp_y <= b_max_cell_y) THEN
 
 				is_crossover = .true.
+
 			   endif
 			 endif
 		     endif
@@ -606,8 +644,6 @@ subroutine crossover_point(point_a1, point_a2, point_b1, point_b2, crossover, is
 
 
 
-	crossover%x = temp_x
-	crossover%y = temp_y
 end subroutine crossover_point
 
 logical function same_point_wa(point_a, point_b)
@@ -622,6 +658,29 @@ logical function same_point_wa(point_a, point_b)
 
 end function same_point_wa
 
+
+
+subroutine print_polygon_wa(polygon, polygon_size, out_unit)
+	implicit none
+	integer, intent(in) :: polygon_size, out_unit
+	type(polygon_point_wa), intent(in), dimension(polygon_size) :: polygon
+	integer :: counter
+	character(len=80) :: temp_string
+
+
+	temp_string =  "> overlap"
+	write(out_unit,'(A80)') temp_string
+
+	
+	going_around: do counter = 1, polygon_size
+
+		write(out_unit,*) polygon(counter)%x, polygon(counter)%y, polygon(counter)%next_index(1), &
+			 polygon(counter)%next_index(2), polygon(counter)%next_index(3), polygon(counter)%crossover
+
+
+	end do going_around
+
+end subroutine print_polygon_wa
 
 
 end module overlapping_polygon
