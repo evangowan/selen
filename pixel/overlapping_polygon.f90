@@ -41,7 +41,7 @@ subroutine overlapping_polygon_sub(polygon1, size1, polygon2, size2, overlap_pol
 	logical, dimension(size2) :: points_inside
 
 	integer :: counter, size_WA, start_polygon1, start_polygon2, overlap_counter, current_point, current_point2, end_point
-	integer :: counter2, current_point3, start_polygon3
+	integer :: counter2, current_point3, start_polygon3, next_point
 
 	type(polygon_point_WA) :: temp_point_WA
 	type(polygon_point_WA), dimension(:), allocatable :: overlapping
@@ -161,12 +161,7 @@ subroutine overlapping_polygon_sub(polygon1, size1, polygon2, size2, overlap_pol
 	same_check: do 
 		current_point = start_polygon1
 		loop_first: do
-!			write(6,*) "points check: ", current_point, current_point2, &
-!				same_point_wa(overlapping(current_point), overlapping(current_point2))
-!			write(6,*) overlapping(current_point)%x, overlapping(current_point)%y, &
-!			 overlapping(overlapping(current_point)%next_index(1))%x,&
-!			 overlapping(overlapping(current_point)%next_index(1))%y
-!			write(6,*) overlapping(current_point2)%x, overlapping(current_point2)%y
+
 
 			if(same_point_wa(overlapping(current_point), overlapping(current_point2))) THEN ! change the pointers
 
@@ -211,14 +206,41 @@ subroutine overlapping_polygon_sub(polygon1, size1, polygon2, size2, overlap_pol
 
 	end do same_check
 
-	! checking the above code, can be deleted later
 
+	! check if any points on polygon 2 fall directly on polygon 1
 	current_point = start_polygon1
 
 	check_polygon1: do
 
-!		write(6,*) "polygon1: ",current_point, overlapping(current_point)%next_index(1)
-		current_point = overlapping(current_point)%next_index(1)
+
+
+		next_point = overlapping(current_point)%next_index(1)
+		current_point2 = start_polygon2
+		check_other_polygon1: do
+
+
+
+			if (point_on_line(overlapping(current_point), overlapping(next_point), overlapping(current_point2)) .and. &
+			    .not. overlapping(current_point2)%crossover ) THEN ! put this point onto the first polygon
+
+
+				
+				overlapping(current_point)%next_index(1) = current_point2
+				overlapping(current_point2)%next_index(1) = next_point
+				overlapping(current_point2)%crossover = .true.
+
+
+				cycle check_polygon1
+				
+			endif
+			current_point2 = overlapping(current_point2)%next_index(2)
+			if(current_point2 == start_polygon2) THEN
+				exit check_other_polygon1
+			endif
+
+		end do check_other_polygon1
+
+		current_point = next_point
 		if(current_point == start_polygon1) THEN
 			exit check_polygon1
 		endif
@@ -227,16 +249,39 @@ subroutine overlapping_polygon_sub(polygon1, size1, polygon2, size2, overlap_pol
 	end do check_polygon1
 
 
+
+	! check if any points on polygon 1 fall directly on polygon 2
 	current_point2 = start_polygon2
 
 	check_polygon2: do
 
-!		write(6,*) "polygon2: ",current_point2, overlapping(current_point2)%next_index(2)
-		current_point2 = overlapping(current_point2)%next_index(2)
+
+		next_point = overlapping(current_point2)%next_index(2)
+		current_point = start_polygon1
+		check_other_polygon2: do
+
+
+
+			if (point_on_line(overlapping(current_point2), overlapping(next_point), overlapping(current_point)) .and. &
+			    .not. overlapping(current_point)%crossover ) THEN ! put this point onto the second polygon
+				
+				overlapping(current_point2)%next_index(2) = current_point
+				overlapping(current_point)%next_index(2) = next_point
+				overlapping(current_point)%crossover = .true.
+				cycle check_polygon2
+				
+			endif
+			current_point = overlapping(current_point)%next_index(1)
+			if(current_point == start_polygon1) THEN
+				exit check_other_polygon2
+			endif
+
+		end do check_other_polygon2
+
+		current_point2 = next_point
 		if(current_point2 == start_polygon2) THEN
 			exit check_polygon2
 		endif
-
 
 	end do check_polygon2
 
@@ -259,18 +304,8 @@ subroutine overlapping_polygon_sub(polygon1, size1, polygon2, size2, overlap_pol
 					    overlapping(current_point2), overlapping(overlapping(current_point2)%next_index(p2)), &
 					    temp_point_WA, is_crossover, overlap)
 
-!				write(6,*) current_point, current_point2, is_crossover, overlap, temp_point_WA%x, temp_point_WA%y
+
 			endif
-
-
-
-!			write(6,*) ">", is_crossover, temp_point_WA%x, temp_point_WA%y
-!			write(6,*) overlapping(current_point)%x, overlapping(current_point)%y, &
-!				overlapping(current_point2)%x, overlapping(current_point2)%y
-!			write(6,*) overlapping(overlapping(current_point)%next_index(p1))%x, &
-!				overlapping(overlapping(current_point)%next_index(p1))%y, &
-!			      overlapping(overlapping(current_point2)%next_index(p2))%x, &
-!				overlapping(overlapping(current_point2)%next_index(p2))%y
 
 
 			if(is_crossover) THEN ! add the point
@@ -331,6 +366,7 @@ subroutine overlapping_polygon_sub(polygon1, size1, polygon2, size2, overlap_pol
 		end if
 
 	end do find_intersecting
+	overlap_counter = overlap_counter - 1
 
 !	write(6,*) "found all intersectiong points"
 !	call print_polygon_wa(overlapping(1:overlap_counter),overlap_counter,6)
@@ -460,6 +496,8 @@ subroutine overlapping_polygon_sub(polygon1, size1, polygon2, size2, overlap_pol
 		size3_out = counter
 
 	end if 
+
+!	call print_polygon_wa(overlapping(1:overlap_counter),overlap_counter,6)
 !	write(6,*) ">>>>>"
 !	do counter = 1, overlap_counter-1
 
@@ -520,6 +558,53 @@ logical function point_in_polygon(polygon, number_points, point)
 	return
 end function point_in_polygon
 
+
+logical function point_on_line(point_a1, point_a2, point_b1)
+
+	! returns true if point_b1 lies between point_a1 and point_a2
+	implicit none
+
+
+	type(polygon_point_WA), intent(in) :: point_a1, point_a2, point_b1
+	double precision :: slope1, intercept1
+	type(polygon_point_WA) :: temp
+
+	slope1 = (point_a2%y - point_a1%y) / (point_a2%x - point_a1%x) 
+	intercept1 = point_a2%y - point_a2%x * slope1
+
+
+	if(abs(point_a2%x - point_a1%x) < epsilon_factor) then ! line is parallel to the y-axis
+		temp%x = point_a1%x
+		if(point_b1%y > min(point_a2%y, point_a1%y) .and. point_b1%y < max(point_a2%y, point_a1%y)) THEN
+			temp%y = point_b1%y
+		else
+			temp%y = point_a2%y ! dummy
+		endif
+
+	elseif(abs(point_a2%y - point_a1%y) < epsilon_factor) then ! line is parallel to the x-axis
+
+		temp%y = point_a1%y
+
+		if(point_b1%x > min(point_a2%x, point_a1%x) .and. point_b1%x < max(point_a2%x, point_a1%x)) THEN
+			temp%x = point_b1%x
+		else
+			temp%x = point_a2%x ! dummy
+		endif
+	else
+		temp%x = point_b1%x
+		temp%y = slope1 * temp%x * intercept1
+	endif
+
+	if (same_point_wa(point_b1, temp) .and. .not. same_point_wa(point_a1, temp).and. .not. same_point_wa(point_a2, temp)) THEN
+		point_on_line=.true.
+	else
+		point_on_line = .false.
+	endif
+
+
+	
+
+end function point_on_line
 
 ! changed this to use type polygon_point
 

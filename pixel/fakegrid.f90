@@ -5,7 +5,7 @@ program fakegrid
 
 	implicit none
 
-	integer, parameter :: grid_dimensions = 101, middle = 51, overlap_size = 50, out_unit = 60
+	integer, parameter :: grid_dimensions = 101, middle = 50, overlap_size = 50, out_unit = 60
 	character(len=150), parameter :: out_file = "hexagon_thickness.gmt"
 
 	double precision, dimension(grid_dimensions,grid_dimensions) :: ice_grid
@@ -46,7 +46,7 @@ program fakegrid
 	x_max_grid = 100.
 	y_min_grid = 0.
 	y_max_grid = 100.
-	hexagon_radius = 1.5
+	hexagon_radius = 2.0
 
 	call definine_grid(x_min_grid, x_max_grid, y_min_grid, y_max_grid, hexagon_radius)
 
@@ -68,10 +68,10 @@ program fakegrid
 		y_max_local = dble(ceiling(hex_y_max/grid_spacing)*grid_spacing)
 
 
-		x_counter_start = nint(x_min_local / grid_spacing) + 1
-		x_counter_end = nint(x_max_local / grid_spacing) + 1
-		y_counter_start = nint(y_min_local / grid_spacing) + 1
-		y_counter_end = nint(y_max_local / grid_spacing) + 1
+		x_counter_start = nint(x_min_local / grid_spacing) 
+		x_counter_end = nint(x_max_local / grid_spacing) 
+		y_counter_start = nint(y_min_local / grid_spacing) 
+		y_counter_end = nint(y_max_local / grid_spacing) 
 
 		! lazy hack for now
 		if(x_counter_start < 1) THEN
@@ -95,11 +95,12 @@ program fakegrid
 		end if
 
 		hexagon_area = polygon_area(hexagon(hex_counter,:),hexagon_points)
-
+		call print_polygon(hexagon(hex_counter,:), hexagon_points, 0.d0, 666)
 		do counter1 = x_counter_start, x_counter_end, 1
 			do counter2 = y_counter_start, y_counter_end, 1
 
-	!			write(6,*) ">>>>", counter1, counter2
+!				write(6,*) ">>>>", (counter1 - x_counter_start) * (y_counter_end - y_counter_start) +&
+!						 (counter2 - y_counter_start) + 1
 
 				! create grid cell polygon
 
@@ -107,22 +108,24 @@ program fakegrid
 				grid_cell(1)%y = dble(counter2) - grid_spacing / 2.0
 				grid_cell(1)%next_index = 2
 
-				grid_cell(2)%x = dble(counter1) + grid_spacing / 2.0
-				grid_cell(2)%y = dble(counter2) - grid_spacing / 2.0
+				grid_cell(2)%x = dble(counter1) - grid_spacing / 2.0
+				grid_cell(2)%y = dble(counter2) + grid_spacing / 2.0
 				grid_cell(2)%next_index = 3
 
 				grid_cell(3)%x = dble(counter1) + grid_spacing / 2.0
 				grid_cell(3)%y = dble(counter2) + grid_spacing / 2.0
 				grid_cell(3)%next_index = 4
 
-				grid_cell(4)%x = dble(counter1) - grid_spacing / 2.0
-				grid_cell(4)%y = dble(counter2) + grid_spacing / 2.0
+				grid_cell(4)%x = dble(counter1) + grid_spacing / 2.0
+				grid_cell(4)%y = dble(counter2) - grid_spacing / 2.0
 				grid_cell(4)%next_index = 1
 
-!				call print_polygon(hexagon(hex_counter,:), hexagon_points, 0.d0, 6)
-!				call print_polygon(grid_cell, 4, 0.d0, 6)
+
+
 				call overlapping_polygon_sub(hexagon(hex_counter,:),hexagon_points, grid_cell, 4, overlap_polygon, overlap_size, &
                                                      overlap_point_count, warning)
+
+
 
 				if (.not. warning) THEN
 
@@ -133,9 +136,19 @@ program fakegrid
 
 						hexagon_thickness(hex_counter) = hexagon_thickness(hex_counter) + area_ratio * &
 											   ice_grid(counter1,counter2)
+					else
+						area = 0.0
+						area_ratio = 0.0
+						
 					endif
 				else
 					write(6,*) "Warning at hexagon centered at: ", hexagon_x(hex_counter), hexagon_y(hex_counter)
+				endif
+
+				call print_polygon(grid_cell, 4, area, 667)
+
+				if(overlap_point_count > 0) THEN
+					call print_polygon(overlap_polygon(1:overlap_point_count), overlap_point_count, area, 668)
 				endif
 
 			end do

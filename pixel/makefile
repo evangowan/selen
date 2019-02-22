@@ -8,7 +8,7 @@ FCFLAGS = -g -fbacktrace -fbounds-check
 
 objfiles =  global_parameters.o grids.o read_icefile.o  find_flowline_fisher_adaptive_4.o flowline_location.o 
 
-
+NFDIR = /usr
 
 grid_creation: grid_creation.f90 hexagon_grid.o
 	$(FC) -o grid_creation $(FCFLAGS) grid_creation.f90 hexagon_grid.o
@@ -29,3 +29,7 @@ create_disc_file: create_disc_file.f90 hexagon_grid.o overlapping_polygon.o
 
 fakegrid: fakegrid.f90 hexagon_grid.o overlapping_polygon.o
 	$(FC) -o fakegrid $(FCFLAGS)  fakegrid.f90 hexagon_grid.o overlapping_polygon.o
+
+
+realgrid: realgrid.f90  hexagon_grid.o overlapping_polygon.o
+	$(FC) -o realgrid $(FCFLAGS) realgrid.f90  hexagon_grid.o overlapping_polygon.o
