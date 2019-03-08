@@ -6,8 +6,9 @@ program tegmarkgrid
 
 	character(len=80), parameter :: info_file="file_info.txt",  out_file = "tegmark_hexagon_thickness.gmt"
 	character(len=80), parameter :: polygon_file="hexagon_projected.gmt"
+	character(len=80), parameter :: element_file = "element_thickness.txt"
 	integer, parameter :: info_unit= 10, grid_unit=20,  hsize = 892, record_length = 4, out_unit = 60, overlap_size = 50
-	integer, parameter :: poly_unit = 70, max_points = 10 ! conservative
+	integer, parameter :: poly_unit = 70, element_unit=80, max_points = 10 ! conservative
 !	double precision, parameter :: hexagon_radius = 25000.0 ! 25 km radius
 	double precision :: hexagon_radius	
 	type(polygon_point), dimension(4) :: grid_cell
@@ -112,7 +113,7 @@ program tegmarkgrid
 
 	open(unit=out_unit, file=out_file, access="sequential", form="formatted", status="replace")
 
-
+	open(unit=element_unit, file=element_file, access="sequential", form="formatted", status="replace")
 
 	hex_loop: do hex_counter = 1, n
 
@@ -221,11 +222,14 @@ program tegmarkgrid
 		if(hexagon_thickness(hex_counter) > 1.0) THEN
 			call print_polygon(hexagon(hex_counter,1:point_count(hex_counter)),point_count(hex_counter), &
 				hexagon_thickness(hex_counter), out_unit)
+
+			write(element_unit,*) hex_counter, hexagon_thickness(hex_counter)
 		endif
 
 
 	end do hex_loop
-
+	close(unit=element_unit)
+	close(unit=out_unit)
 
 	deallocate(hexagon)
 	deallocate(point_count)
