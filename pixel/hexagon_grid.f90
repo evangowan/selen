@@ -273,6 +273,37 @@ subroutine polygon_extremes(polygon, polygon_size, poly_x_min, poly_x_max, poly_
 end subroutine polygon_extremes
 	
 
+logical function points_outside(polygon, polygon_size,  x_min_grid, x_max_grid, y_min_grid, y_max_grid)
+! checks if any points in the polygon fall outside of the map range, if so it will return true
+	implicit none
+	integer, intent(in) :: polygon_size
+	type(polygon_point), intent(in), dimension(polygon_size) :: polygon
+	double precision, intent(in) ::  x_min_grid, x_max_grid, y_min_grid, y_max_grid
+	integer :: counter
+
+	points_outside = .false.
+
+	counter = 1
+
+
+	going_around: do
+
+		if(polygon(counter)%x < x_min_grid .or. polygon(counter)%x > x_max_grid .or. &
+		   polygon(counter)%y < y_min_grid .or. polygon(counter)%y > y_max_grid) THEN
+			points_outside = .true.
+			return
+		endif
+
+
+		counter = polygon(counter)%next_index
+		if(counter == 1) THEN
+			exit going_around
+		endif
+	end do going_around
+
+
+end function points_outside
+
 double precision function polygon_area(polygon, polygon_size)
 	implicit none
 	integer, intent(in) :: polygon_size

@@ -1,7 +1,7 @@
 FC = gfortran
 
-FCFLAGS = -g -fbacktrace -fbounds-check 
-#FCFLAGS = -O2
+#FCFLAGS = -g -fbacktrace -fbounds-check 
+FCFLAGS = -O2
 
 # if compiling with the Intel Fortran compiler, you need to add an extra flag
 #FCFLAGS = -O2 -assume byterecl
@@ -33,3 +33,6 @@ fakegrid: fakegrid.f90 hexagon_grid.o overlapping_polygon.o
 
 realgrid: realgrid.f90  hexagon_grid.o overlapping_polygon.o
 	$(FC) -o realgrid $(FCFLAGS) realgrid.f90  hexagon_grid.o overlapping_polygon.o
+
+tegmarkgrid: tegmarkgrid.f90  hexagon_grid.o overlapping_polygon.o
+	$(FC) -o tegmarkgrid $(FCFLAGS) tegmarkgrid.f90  hexagon_grid.o overlapping_polygon.o
