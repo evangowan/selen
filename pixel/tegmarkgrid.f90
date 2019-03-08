@@ -84,6 +84,7 @@ program tegmarkgrid
 
 	close(info_unit)
 
+
 	allocate(ice_thickness(num_x, num_y))
 
 	open(unit=grid_unit, file=grid_file, access="direct", form="unformatted", status="old", recl=record_length)
@@ -118,7 +119,6 @@ program tegmarkgrid
 	hex_loop: do hex_counter = 1, n
 
 
-
 		if(points_outside(hexagon(hex_counter,1:point_count(hex_counter)),point_count(hex_counter),&
                            x_min_grid, x_max_grid, y_min_grid, y_max_grid)) THEN
 			cycle hex_loop
@@ -136,10 +136,10 @@ program tegmarkgrid
 		y_max_local = dble(ceiling(hex_y_max/dy)*dy)
 
 
-		x_counter_start = nint(x_min_local / dx) 
-		x_counter_end = nint(x_max_local / dx) + 1
-		y_counter_start = nint(y_min_local / dy) 
-		y_counter_end = nint(y_max_local / dy)  + 1
+		x_counter_start = nint((x_min_local-x_min_grid) / dx) 
+		x_counter_end = nint((x_max_local-x_min_grid) / dx) + 1
+		y_counter_start = nint((y_min_local-y_min_grid) / dy) 
+		y_counter_end = nint((y_max_local-y_min_grid) / dy)  + 1
 
 		! lazy hack for now
 		if(x_counter_start < 1) THEN
@@ -171,20 +171,20 @@ program tegmarkgrid
 
 					! create grid cell polygon
 
-					grid_cell(1)%x = dble(counter1-1)*dx - dx / 2.0
-					grid_cell(1)%y = dble(counter2-1)*dy - dy / 2.0
+					grid_cell(1)%x = dble(counter1-1)*dx - dx / 2.0 + x_min_grid
+					grid_cell(1)%y = dble(counter2-1)*dy - dy / 2.0 + y_min_grid
 					grid_cell(1)%next_index = 2
 
-					grid_cell(2)%x = dble(counter1-1)*dx - dx / 2.0
-					grid_cell(2)%y = dble(counter2-1)*dy + dy / 2.0
+					grid_cell(2)%x = dble(counter1-1)*dx - dx / 2.0 + x_min_grid
+					grid_cell(2)%y = dble(counter2-1)*dy + dy / 2.0 + y_min_grid
 					grid_cell(2)%next_index = 3
 
-					grid_cell(3)%x = dble(counter1-1) *dx+ dx / 2.0
-					grid_cell(3)%y = dble(counter2-1)*dy + dy / 2.0
+					grid_cell(3)%x = dble(counter1-1) *dx+ dx / 2.0 + x_min_grid
+					grid_cell(3)%y = dble(counter2-1)*dy + dy / 2.0 + y_min_grid
 					grid_cell(3)%next_index = 4
 
-					grid_cell(4)%x = dble(counter1-1)*dx + dx / 2.0
-					grid_cell(4)%y = dble(counter2-1)*dy - dy / 2.0
+					grid_cell(4)%x = dble(counter1-1)*dx + dx / 2.0 + x_min_grid
+					grid_cell(4)%y = dble(counter2-1)*dy - dy / 2.0 + y_min_grid
 					grid_cell(4)%next_index = 1
 
 
