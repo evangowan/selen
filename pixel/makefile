@@ -36,3 +36,6 @@ realgrid: realgrid.f90  hexagon_grid.o overlapping_polygon.o
 
 tegmarkgrid: tegmarkgrid.f90  hexagon_grid.o overlapping_polygon.o
 	$(FC) -o tegmarkgrid $(FCFLAGS) tegmarkgrid.f90  hexagon_grid.o overlapping_polygon.o
+
+selen_ice_input: selen_ice_input.f90
+	$(FC) -o selen_ice_input $(FCFLAGS) selen_ice_input.f90

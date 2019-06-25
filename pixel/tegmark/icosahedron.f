@@ -107,7 +107,7 @@
 	do i=0,n-1
 	  call pixel2vector(i,resolution,R,v,vector)
 	  call vector2pixel(vector,resolution,R,v,pixel)
-	  write(2,'(2i6,3f9.5)') i, pixel, (vector(j),j=1,3)
+	  write(2,'(2(i6,1X),3(f9.5,1X))') i, pixel, (vector(j),j=1,3)
 	end do
 	close(2)
 	print *,n,' pixels saved in the file ',f
